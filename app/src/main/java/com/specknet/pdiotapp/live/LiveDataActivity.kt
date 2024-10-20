@@ -23,9 +23,18 @@ import com.specknet.pdiotapp.utils.RESpeckLiveData
 import com.specknet.pdiotapp.utils.ThingyLiveData
 import kotlin.collections.ArrayList
 
+import org.tensorflow.lite.Interpreter
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.MappedByteBuffer
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.channels.FileChannel
+
 
 class LiveDataActivity : AppCompatActivity() {
 
+    private lateinit var tfliteInterpreter: Interpreter
     // global graph variables
     lateinit var dataSet_res_accel_x: LineDataSet
     lateinit var dataSet_res_accel_y: LineDataSet
@@ -56,6 +65,12 @@ class LiveDataActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_live_data)
 
+        try {
+            tfliteInterpreter = Interpreter(loadModelFile())
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
         setupCharts()
 
         // set up the broadcast receiver
@@ -80,7 +95,14 @@ class LiveDataActivity : AppCompatActivity() {
                     time += 1
                     updateGraph("respeck", x, y, z)
 
-                    val currentActivity = "unknown"
+                    val accelData = floatArrayOf(x, y, z)
+                    val predictedClass = classifyActivity(accelData)
+
+                    // Map predicted class to an activity name
+                    val activities = arrayOf("Sitting", "Walking", "Running", "Climbing Stairs")
+                    val currentActivity = activities[predictedClass]
+
+                    // Update the UI with the detected activity
                     runOnUiThread {
                         findViewById<TextView>(R.id.respeck_activity_text_view).text = "Current Activity: $currentActivity"
                     }
@@ -118,8 +140,12 @@ class LiveDataActivity : AppCompatActivity() {
                     time += 1
                     updateGraph("thingy", x, y, z)
 
-                    val currentActivity = "unknown"
-                        //classifyActivity(x, y, z)
+                    val accelData = floatArrayOf(x, y, z)
+                    val predictedClass = classifyActivity(accelData)
+
+                    // Map predicted class to an activity name
+                    val activities = arrayOf("Sitting", "Walking", "Running", "Climbing Stairs")
+                    val currentActivity = activities[predictedClass]
 
                     // Update the UI with the detected activity
                     runOnUiThread {
@@ -137,6 +163,35 @@ class LiveDataActivity : AppCompatActivity() {
         val handlerThingy = Handler(looperThingy)
         this.registerReceiver(thingyLiveUpdateReceiver, filterTestThingy, null, handlerThingy)
 
+    }
+
+    private fun loadModelFile(): MappedByteBuffer {
+        val fileDescriptor = assets.openFd("model.tflite")
+        val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+        val fileChannel = inputStream.channel
+        val startOffset = fileDescriptor.startOffset
+        val declaredLength = fileDescriptor.declaredLength
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+    }
+
+    private fun classifyActivity(accelData: FloatArray): Int {
+        // Prepare input buffer
+        val inputBuffer = ByteBuffer.allocateDirect(accelData.size * 4)
+        inputBuffer.order(ByteOrder.nativeOrder())
+
+        // Insert the accelerometer data into the input buffer
+        for (value in accelData) {
+            inputBuffer.putFloat(value)
+        }
+
+        // Prepare output buffer to receive the class prediction
+        val outputBuffer = Array(1) { FloatArray(1) }
+
+        // Run inference
+        tfliteInterpreter.run(inputBuffer, outputBuffer)
+
+        // Return the predicted class as an integer
+        return outputBuffer[0][0].toInt()
     }
 
 
