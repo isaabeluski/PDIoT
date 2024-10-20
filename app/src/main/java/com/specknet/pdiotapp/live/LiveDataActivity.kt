@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.util.Log
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -79,6 +80,11 @@ class LiveDataActivity : AppCompatActivity() {
                     time += 1
                     updateGraph("respeck", x, y, z)
 
+                    val currentActivity = "unknown"
+                    runOnUiThread {
+                        findViewById<TextView>(R.id.respeck_activity_text_view).text = "Current Activity: $currentActivity"
+                    }
+
                 }
             }
         }
@@ -111,6 +117,14 @@ class LiveDataActivity : AppCompatActivity() {
 
                     time += 1
                     updateGraph("thingy", x, y, z)
+
+                    val currentActivity = "unknown"
+                        //classifyActivity(x, y, z)
+
+                    // Update the UI with the detected activity
+                    runOnUiThread {
+                        findViewById<TextView>(R.id.thingy_activity_text_view).text = "Current Activity: $currentActivity"
+                    }
 
                 }
             }
