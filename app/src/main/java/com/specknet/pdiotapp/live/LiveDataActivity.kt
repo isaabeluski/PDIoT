@@ -61,6 +61,20 @@ class LiveDataActivity : AppCompatActivity() {
 
     val WINDOW_SIZE = 50  // Define the window size as 50
 
+    val activities = mapOf(
+        0 to "ascending_stairs",
+        1 to "shuffle_walking",
+        2 to "sitting_standing",
+        3 to "misc_movement",
+        4 to "normal_walking",
+        5 to "running_normal",
+        6 to "descending_stairs",
+        7 to "lying_down_right",
+        8 to "lying_down_left",
+        9 to "lying_down_stomach",
+        10 to "lying_down_back"
+    )
+
     lateinit var interpreter: Interpreter
 
     // Function to load the model file
@@ -145,6 +159,7 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Get the detected activity index
                         val detectedActivityIndex = getDetectedActivityIndex(output[0])
+                        val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
                         // Clear the buffer
 
@@ -152,6 +167,7 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
+                        Log.d("Detected Activity", detectedActivityLabel)
                     }
 
                 }
