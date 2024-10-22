@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.util.Log
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -168,6 +169,11 @@ class LiveDataActivity : AppCompatActivity() {
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
+
+                        // Update the UI with the detected activity
+                        runOnUiThread {
+                            findViewById<TextView>(R.id.respeck_activity_text_view).text = "Current Activity: $detectedActivityLabel"
+                        }
                     }
 
                 }
