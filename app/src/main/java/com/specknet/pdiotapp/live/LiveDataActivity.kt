@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.AssetFileDescriptor
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -20,7 +21,11 @@ import com.specknet.pdiotapp.R
 import com.specknet.pdiotapp.utils.Constants
 import com.specknet.pdiotapp.utils.RESpeckLiveData
 import com.specknet.pdiotapp.utils.ThingyLiveData
+import java.io.FileInputStream
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 import kotlin.collections.ArrayList
+import org.tensorflow.lite.Interpreter
 
 
 class LiveDataActivity : AppCompatActivity() {
@@ -51,11 +56,43 @@ class LiveDataActivity : AppCompatActivity() {
     val filterTestRespeck = IntentFilter(Constants.ACTION_RESPECK_LIVE_BROADCAST)
     val filterTestThingy = IntentFilter(Constants.ACTION_THINGY_BROADCAST)
 
+    val respeckBuffer = ArrayList<FloatArray>()  // Buffer for Respeck data
+    val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
+
+    val WINDOW_SIZE = 50  // Define the window size as 50
+
+    lateinit var interpreter: Interpreter
+
+    // Function to load the model file
+    fun loadModelFile(): MappedByteBuffer {
+        val fileDescriptor: AssetFileDescriptor = assets.openFd("model.tflite")
+        val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+        val fileChannel: FileChannel = inputStream.channel
+        val startOffset: Long = fileDescriptor.startOffset
+        val declaredLength: Long = fileDescriptor.declaredLength
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+    }
+
+    private fun getDetectedActivityIndex(output: FloatArray): Int {
+        var maxProbability = -1f
+        var activityIndex = -1
+        for (i in output.indices) {
+            if (output[i] > maxProbability) {
+                maxProbability = output[i]
+                activityIndex = i
+            }
+        }
+        return activityIndex // Returns the index of the highest probability
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_live_data)
 
         setupCharts()
+
+        val model = loadModelFile()
+        interpreter = Interpreter(model) // Initialize interpreter here
 
         // set up the broadcast receiver
         respeckLiveUpdateReceiver = object : BroadcastReceiver() {
@@ -78,6 +115,44 @@ class LiveDataActivity : AppCompatActivity() {
 
                     time += 1
                     updateGraph("respeck", x, y, z)
+
+                    val respeckData = floatArrayOf(x, y, z)
+                    respeckBuffer.add(respeckData)
+
+                    Log.d("Live", "onReceive: respeckBuffer = " + respeckBuffer.size)
+
+                    if (respeckBuffer.size >= WINDOW_SIZE) {
+                        // Currently, buffer is of size (50, 3)
+                        // We need to convert it to (1, 50, 3)
+
+                        Log.d("Live", "HAS REACHED WINDOW SIZE")
+
+                        // Create the input and output arrays
+                        val input = Array(1) { Array(WINDOW_SIZE) { FloatArray(3) } }
+
+                        // Convert the buffer to the input array
+                        for (i in 0 until WINDOW_SIZE) {
+                            input[0][i][0] = respeckBuffer[i][0]
+                            input[0][i][1] = respeckBuffer[i][1]
+                            input[0][i][2] = respeckBuffer[i][2]
+                        }
+
+                        // Create the output array([ 1, 11], dtype=int32)
+                        val output = Array(1) { FloatArray(11) }
+
+                        // Run the model
+                        interpreter.run(input, output)
+
+                        // Get the detected activity index
+                        val detectedActivityIndex = getDetectedActivityIndex(output[0])
+
+                        // Clear the buffer
+
+                        respeckBuffer.clear()
+
+                        // Print the detected activity
+                        Log.d("Detected Activity", detectedActivityIndex.toString())
+                    }
 
                 }
             }
