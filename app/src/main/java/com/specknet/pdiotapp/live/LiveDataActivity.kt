@@ -140,8 +140,6 @@ class LiveDataActivity : AppCompatActivity() {
                         // Currently, buffer is of size (50, 3)
                         // We need to convert it to (1, 50, 3)
 
-                        Log.d("Live", "HAS REACHED WINDOW SIZE")
-
                         // Create the input and output arrays
                         val input = Array(1) { Array(WINDOW_SIZE) { FloatArray(3) } }
 
