@@ -170,7 +170,7 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Update the UI with the detected activity
                         runOnUiThread {
-                            findViewById<TextView>(R.id.respeck_activity_text_view).text = "Current Activity: $detectedActivityLabel"
+                            findViewById<TextView>(R.id.respeck_activity_text_view).text = "Respeck Activity: $detectedActivityLabel"
                         }
                     }
 
@@ -206,6 +206,50 @@ class LiveDataActivity : AppCompatActivity() {
 
                     time += 1
                     updateGraph("thingy", x, y, z)
+
+
+                    val thingyData = floatArrayOf(x, y, z)
+                    thingyBuffer.add(thingyData)
+
+                    Log.d("Live", "onReceive: thingyBuffer = " + thingyBuffer.size)
+
+                    if (thingyBuffer.size >= WINDOW_SIZE) {
+                        // Currently, buffer is of size (50, 3)
+                        // We need to convert it to (1, 50, 3)
+
+                        // Create the input and output arrays
+                        val input = Array(1) { Array(WINDOW_SIZE) { FloatArray(3) } }
+
+                        // Convert the buffer to the input array
+                        for (i in 0 until WINDOW_SIZE) {
+                            input[0][i][0] = thingyBuffer[i][0]
+                            input[0][i][1] = thingyBuffer[i][1]
+                            input[0][i][2] = thingyBuffer[i][2]
+                        }
+
+                        // Create the output array([ 1, 11], dtype=int32)
+                        val output = Array(1) { FloatArray(11) }
+
+                        // Run the model
+                        interpreter.run(input, output)
+
+                        // Get the detected activity index
+                        val detectedActivityIndex = getDetectedActivityIndex(output[0])
+                        val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
+
+                        // Clear the buffer
+
+                        thingyBuffer.clear()
+
+                        // Print the detected activity
+                        Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
+                        Log.d("Detected Activity Thingy", detectedActivityLabel)
+
+                        // Update the UI with the detected activity
+                        runOnUiThread {
+                            findViewById<TextView>(R.id.thingy_activity_text_view).text = "Thingy Activity: $detectedActivityLabel"
+                        }
+                    }
 
                 }
             }
