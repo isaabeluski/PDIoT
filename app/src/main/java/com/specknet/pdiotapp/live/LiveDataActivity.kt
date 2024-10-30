@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.util.Log
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.charts.LineChart
@@ -31,6 +32,7 @@ import org.tensorflow.lite.Interpreter
 
 class LiveDataActivity : AppCompatActivity() {
 
+
     // global graph variables
     lateinit var dataSet_res_accel_x: LineDataSet
     lateinit var dataSet_res_accel_y: LineDataSet
@@ -39,6 +41,9 @@ class LiveDataActivity : AppCompatActivity() {
     lateinit var dataSet_thingy_accel_x: LineDataSet
     lateinit var dataSet_thingy_accel_y: LineDataSet
     lateinit var dataSet_thingy_accel_z: LineDataSet
+
+    private lateinit var activityDisplayTextView: TextView
+    private lateinit var activityIcon: ImageView
 
     var time = 0f
     lateinit var allRespeckData: LineData
@@ -104,6 +109,10 @@ class LiveDataActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_live_data)
 
+        activityDisplayTextView = findViewById(R.id.activity_display)
+        activityIcon = findViewById(R.id.sitting_icon)
+
+
         setupCharts()
 
         val model = loadModelFile()
@@ -160,10 +169,13 @@ class LiveDataActivity : AppCompatActivity() {
                         val detectedActivityIndex = getDetectedActivityIndex(output[0])
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
+
                         // Clear the buffer
 
                         respeckBuffer.clear()
 
+                        displayDetectedActivity(detectedActivityLabel)
+                        updateIconBasedOnActivity(detectedActivityLabel)
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
@@ -184,6 +196,7 @@ class LiveDataActivity : AppCompatActivity() {
         looperRespeck = handlerThreadRespeck.looper
         val handlerRespeck = Handler(looperRespeck)
         this.registerReceiver(respeckLiveUpdateReceiver, filterTestRespeck, null, handlerRespeck)
+
 
         // set up the broadcast receiver
         thingyLiveUpdateReceiver = object : BroadcastReceiver() {
@@ -241,6 +254,9 @@ class LiveDataActivity : AppCompatActivity() {
 
                         thingyBuffer.clear()
 
+                        displayDetectedActivity(detectedActivityLabel)
+                        updateIconBasedOnActivity(detectedActivityLabel)
+
                         // Print the detected activity
                         Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
                         Log.d("Detected Activity Thingy", detectedActivityLabel)
@@ -264,6 +280,57 @@ class LiveDataActivity : AppCompatActivity() {
 
     }
 
+    private fun displayDetectedActivity(activityLabel: String) {
+        runOnUiThread {
+            activityDisplayTextView.text = "Current Activity: $activityLabel"
+        }
+    }
+
+    private fun updateIconBasedOnActivity(activity: String) {
+        when (activity) {
+            "sitting" -> {
+                activityIcon.setImageResource(R.drawable.man_standing) // icon for sitting
+                activityDisplayTextView.text = "Current Activity: Standing"
+            }
+            "walking" -> {
+                activityIcon.setImageResource(R.drawable.walking) // icon for walking
+                activityDisplayTextView.text = "Current Activity: Walking"
+            }
+            "running" -> {
+                activityIcon.setImageResource(R.drawable.running) // icon for running
+                activityDisplayTextView.text = "Current Activity: Running"
+            }
+            "ascending stairs" -> {
+                activityIcon.setImageResource(R.drawable.ascending_stairs) // icon for running
+                activityDisplayTextView.text = "Current Activity: Ascending Stairs"
+            }
+            "descending stairs" -> {
+                activityIcon.setImageResource(R.drawable.descending_stairs) // icon for running
+                activityDisplayTextView.text = "Current Activity: Descending Stairs"
+            }
+            "lying down on back" -> {
+                activityIcon.setImageResource(R.drawable.lying_down_on_back) // icon for running
+                activityDisplayTextView.text = "Current Activity: Lying Down on Back"
+            }
+            "lying down on left" -> {
+                activityIcon.setImageResource(R.drawable.lying_down_on_left) // icon for running
+                activityDisplayTextView.text = "Current Activity: Lying Down on Left"
+            }
+            "lying down on right" -> {
+                activityIcon.setImageResource(R.drawable.lying_down_on_right) // icon for running
+                activityDisplayTextView.text = "Current Activity: Lying Down on Right"
+            }
+            "lying down on stomach" -> {
+                activityIcon.setImageResource(R.drawable.lying_down_stomach) // icon for running
+                activityDisplayTextView.text = "Current Activity: Lying Down on Stomach"
+            }
+
+            else -> {
+                activityIcon.setImageResource(R.drawable.man_standing) // default icon
+                activityDisplayTextView.text = "Current Activity: Unknown"
+            }
+        }
+    }
 
     fun setupCharts() {
         respeckChart = findViewById(R.id.respeck_chart)

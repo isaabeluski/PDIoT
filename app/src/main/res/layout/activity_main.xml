@@ -15,57 +15,56 @@
             android:id="@+id/textView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="100px"
-            android:text="I want to"
+            android:layout_marginTop="40dp"
+            android:text="Choose an activity:"
+            android:textColor="#000000"
+            android:textSize="18sp"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/record_button"/>
+            app:layout_constraintTop_toTopOf="parent"/>
 
-        <Button
+        <include
             android:id="@+id/record_button"
-            android:layout_width="550px"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="100px"
-            android:background="#03A9F4"
-            android:text="Record data"
-            android:textColor="#FFFFFF"
+            layout="@layout/custom_button"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="50dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2"
-            app:layout_constraintBottom_toTopOf="@+id/live_button"/>
+            app:layout_constraintTop_toBottomOf="@+id/textView2"/>
 
-
-        <Button
+        <include
             android:id="@+id/live_button"
-            android:layout_width="550px"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="100px"
-            android:background="#03A9F4"
-            android:text="Watch live processing"
-            android:textColor="#FFFFFF"
+            layout="@layout/custom_button"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="50dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/record_button"
-            app:layout_constraintBottom_toTopOf="@+id/ble_button"/>
+            app:layout_constraintTop_toBottomOf="@+id/record_button"/>
 
-
-        <Button
+        <include
             android:id="@+id/ble_button"
-            android:layout_width="550px"
-            android:layout_height="wrap_content"
-            android:text="Connect sensors"
-            android:layout_marginTop="100px"
-            android:layout_marginBottom="100px"
-            android:background="#03A9F4"
-            android:textColor="#FFFFFF"
-            app:layout_constraintTop_toBottomOf="@+id/live_button"
+            layout="@layout/custom_button"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="50dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
+            app:layout_constraintTop_toBottomOf="@+id/live_button"/>
+
+        <include
+            android:id="@+id/sleep_button"
+            layout="@layout/custom_button"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="50dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ble_button"/>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -12,6 +12,9 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -27,9 +30,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     // buttons and textviews
-    lateinit var liveProcessingButton: Button
-    lateinit var pairingButton: Button
-    lateinit var recordButton: Button
+    lateinit var liveProcessingButton: LinearLayout
+    lateinit var pairingButton: LinearLayout
+    lateinit var recordButton: LinearLayout
+    lateinit var sleepAnalysisButton: LinearLayout
 
     // permissions
     lateinit var permissionAlertDialog: AlertDialog.Builder
@@ -63,9 +67,17 @@ class MainActivity : AppCompatActivity() {
             startActivity(introIntent)
         }
 
+        // Initialize buttons
         liveProcessingButton = findViewById(R.id.live_button)
         pairingButton = findViewById(R.id.ble_button)
         recordButton = findViewById(R.id.record_button)
+        sleepAnalysisButton = findViewById(R.id.sleep_button)
+
+        // Set text and icon for each button
+        setButtonDetails(recordButton, "RECORD DATA", R.drawable.ic_recording_icon)
+        setButtonDetails(liveProcessingButton, "WATCH LIVE PROCESSING", R.drawable.ic_live_data_icon)
+        setButtonDetails(pairingButton, "CONNECT SENSORS", R.drawable.ic_bluetooth_icon)
+        setButtonDetails(sleepAnalysisButton, "SLEEP ANALYSIS", R.drawable.ic_moon_icon)
 
         permissionAlertDialog = AlertDialog.Builder(this)
 
@@ -81,6 +93,14 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun setButtonDetails(button: LinearLayout, text: String, iconResId: Int) {
+        val buttonText = button.findViewById<TextView>(R.id.button_text)
+        val buttonIcon = button.findViewById<ImageView>(R.id.button_icon)
+
+        buttonText.text = text
+        buttonIcon.setImageResource(iconResId)
+    }
+
     fun setupClickListeners() {
         liveProcessingButton.setOnClickListener {
             val intent = Intent(this, LiveDataActivity::class.java)
@@ -91,6 +111,7 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, ConnectingActivity::class.java)
             startActivity(intent)
         }
+
 
         recordButton.setOnClickListener {
             val intent = Intent(this, RecordingActivity::class.java)

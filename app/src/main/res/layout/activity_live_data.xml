@@ -1,84 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".live.LiveDataActivity">
-
-    <TextView
-        android:id="@+id/respeck_activity_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/respeck_activity_unknown"
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <TextView
-        android:id="@+id/thingy_activity_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/thingy_activity_unknown"
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@id/respeck_activity_text_view"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:id="@+id/respeck_graphs"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/thingy_graphs">
+        android:padding="16dp">
 
+        <!-- Icon of a man sitting -->
+        <ImageView
+            android:id="@+id/sitting_icon"
+            android:layout_width="170dp"
+            android:layout_height="170dp"
+            android:src="@drawable/man_standing"
+            android:contentDescription="Icon of a man sitting"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Activity Display Widget -->
         <TextView
+            android:id="@+id/activity_display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Respeck Live Data"/>
+            android:text="Current Activity: None"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:gravity="center"
+            android:textColor="@android:color/black"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"/>
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/respeck_chart"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/respeck_graphs"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:id="@+id/thingy_graphs"
-        android:orientation="vertical">
-
+        <!-- Respeck Activity TextView -->
         <TextView
+            android:id="@+id/respeck_activity_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Thingy Live Data"/>
+            android:text="@string/respeck_activity_unknown"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:layout_gravity="center"/>
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/thingy_chart"
+        <!-- Thingy Activity TextView -->
+        <TextView
+            android:id="@+id/thingy_activity_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/thingy_activity_unknown"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:layout_gravity="center"/>
+
+        <!-- Respeck Graphs -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/respeck_graphs"
+            android:layout_marginTop="24dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Respeck Live Data"
+                android:textColor="@android:color/darker_gray"
+                android:paddingBottom="8dp"/>
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/respeck_chart"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"/>
+        </LinearLayout>
+
+        <!-- Thingy Graphs -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Thingy Live Data"
+                android:textColor="@android:color/darker_gray"
+                android:paddingBottom="8dp"/>
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/thingy_chart"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"/>
+        </LinearLayout>
 
     </LinearLayout>
+</ScrollView>
 
-
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
