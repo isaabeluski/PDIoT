@@ -185,10 +185,6 @@ class LiveDataActivity : AppCompatActivity() {
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
 
-                        // Update the UI with the detected activity
-                        runOnUiThread {
-                            findViewById<TextView>(R.id.respeck_activity_text_view).text = "Respeck Activity: $detectedActivityLabel"
-                        }
                     }
 
                 }
@@ -266,10 +262,6 @@ class LiveDataActivity : AppCompatActivity() {
                         Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
                         Log.d("Detected Activity Thingy", detectedActivityLabel)
 
-                        // Update the UI with the detected activity
-                        runOnUiThread {
-                            findViewById<TextView>(R.id.thingy_activity_text_view).text = "Thingy Activity: $detectedActivityLabel"
-                        }
                     }
 
                 }

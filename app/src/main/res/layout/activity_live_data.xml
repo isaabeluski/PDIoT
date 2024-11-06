@@ -9,15 +9,31 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Icon of a man sitting -->
-        <ImageView
-            android:id="@+id/standing_icon"
-            android:layout_width="170dp"
-            android:layout_height="170dp"
-            android:src="@drawable/man_standing"
-            android:contentDescription="Icon of a man sitting"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
             android:layout_gravity="center"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginTop="16dp">
+
+            <!-- Existing icon of a man standing -->
+            <ImageView
+                android:id="@+id/standing_icon"
+                android:layout_width="170dp"
+                android:layout_height="170dp"
+                android:src="@drawable/man_standing"
+                android:contentDescription="Icon of a man standing"
+                android:layout_marginEnd="16dp"/>
+
+            <!-- New icon (e.g., sitting icon) -->
+            <ImageView
+                android:id="@+id/normal_breathing_icon"
+                android:layout_width="170dp"
+                android:layout_height="170dp"
+                android:src="@drawable/normal_breathing"
+                android:contentDescription="Icon of normal breathing"/>
+        </LinearLayout>
 
         <!-- Activity Display Widget -->
         <TextView
@@ -33,29 +49,18 @@
             android:layout_gravity="center"
             android:layout_marginTop="16dp"/>
 
-        <!-- Respeck Activity TextView -->
         <TextView
-            android:id="@+id/respeck_activity_text_view"
+            android:id="@+id/social_sign_display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/respeck_activity_unknown"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"
-            android:layout_marginTop="16dp"
+            android:text="Current Social Sign: None"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:padding="8dp"
             android:gravity="center"
-            android:layout_gravity="center"/>
-
-        <!-- Thingy Activity TextView -->
-        <TextView
-            android:id="@+id/thingy_activity_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/thingy_activity_unknown"
-            android:textSize="16sp"
             android:textColor="@android:color/black"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"/>
 
         <!-- Respeck Graphs -->
         <LinearLayout
