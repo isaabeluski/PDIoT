@@ -59,6 +59,9 @@ class LiveDataActivity : AppCompatActivity() {
     lateinit var looperRespeck: Looper
     lateinit var looperThingy: Looper
 
+    private var lastUpdateTime = System.currentTimeMillis()
+    private val updateInterval = 1000L
+
     val filterTestRespeck = IntentFilter(Constants.ACTION_RESPECK_LIVE_BROADCAST)
     val filterTestThingy = IntentFilter(Constants.ACTION_THINGY_BROADCAST)
 
@@ -110,7 +113,9 @@ class LiveDataActivity : AppCompatActivity() {
         setContentView(R.layout.activity_live_data)
 
         activityDisplayTextView = findViewById(R.id.activity_display)
-        activityIcon = findViewById(R.id.sitting_icon)
+        activityIcon = findViewById(R.id.standing_icon)
+        Log.d("IconUpdate", "activityIcon initialized: ${activityIcon != null}")
+        Log.d("IconUpdate", "Current drawable resource ID: ${activityIcon.drawable}")
 
 
         setupCharts()
@@ -255,9 +260,9 @@ class LiveDataActivity : AppCompatActivity() {
                         thingyBuffer.clear()
 
                         displayDetectedActivity(detectedActivityLabel)
-                        updateIconBasedOnActivity(detectedActivityLabel)
-
-                        // Print the detected activity
+//                        updateIconBasedOnActivity(detectedActivityLabel)
+//
+//                        // Print the detected activity
                         Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
                         Log.d("Detected Activity Thingy", detectedActivityLabel)
 
@@ -280,54 +285,55 @@ class LiveDataActivity : AppCompatActivity() {
 
     }
 
+
     private fun displayDetectedActivity(activityLabel: String) {
-        runOnUiThread {
-            activityDisplayTextView.text = "Current Activity: $activityLabel"
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastUpdateTime >= updateInterval) {
+            runOnUiThread {
+                activityDisplayTextView.text = "Current Activity: $activityLabel"
+            }
+            lastUpdateTime = currentTime
         }
     }
 
-    private fun updateIconBasedOnActivity(activity: String) {
-        when (activity) {
-            "sitting" -> {
-                activityIcon.setImageResource(R.drawable.man_standing) // icon for sitting
-                activityDisplayTextView.text = "Current Activity: Standing"
-            }
-            "walking" -> {
-                activityIcon.setImageResource(R.drawable.walking) // icon for walking
-                activityDisplayTextView.text = "Current Activity: Walking"
-            }
-            "running" -> {
-                activityIcon.setImageResource(R.drawable.running) // icon for running
-                activityDisplayTextView.text = "Current Activity: Running"
-            }
-            "ascending stairs" -> {
-                activityIcon.setImageResource(R.drawable.ascending_stairs) // icon for running
-                activityDisplayTextView.text = "Current Activity: Ascending Stairs"
-            }
-            "descending stairs" -> {
-                activityIcon.setImageResource(R.drawable.descending_stairs) // icon for running
-                activityDisplayTextView.text = "Current Activity: Descending Stairs"
-            }
-            "lying down on back" -> {
-                activityIcon.setImageResource(R.drawable.lying_down_on_back) // icon for running
-                activityDisplayTextView.text = "Current Activity: Lying Down on Back"
-            }
-            "lying down on left" -> {
-                activityIcon.setImageResource(R.drawable.lying_down_on_left) // icon for running
-                activityDisplayTextView.text = "Current Activity: Lying Down on Left"
-            }
-            "lying down on right" -> {
-                activityIcon.setImageResource(R.drawable.lying_down_on_right) // icon for running
-                activityDisplayTextView.text = "Current Activity: Lying Down on Right"
-            }
-            "lying down on stomach" -> {
-                activityIcon.setImageResource(R.drawable.lying_down_stomach) // icon for running
-                activityDisplayTextView.text = "Current Activity: Lying Down on Stomach"
-            }
+    private var lastActivity = ""
 
-            else -> {
-                activityIcon.setImageResource(R.drawable.man_standing) // default icon
-                activityDisplayTextView.text = "Current Activity: Unknown"
+    private fun updateIconBasedOnActivity(activity: String) {
+        val currentTime = System.currentTimeMillis()
+        Log.d("IconUpdate", "Updating icon for activity: $activity")
+
+        Log.d("IconUpdate", "Checking condition: activity != lastActivity -> ${activity != lastActivity}")
+        //Log.d("IconUpdate", "Checking condition: currentTime - lastUpdateTime >= updateInterval -> ${currentTime - lastUpdateTime >= updateInterval}")
+        // Only update if activity changes or if at least 1 second has passed since the last update
+        if (activity != lastActivity) {
+            runOnUiThread {
+                Log.d("IconUpdate", "Setting icon for: $activity")
+                val drawable = when (activity) {
+                    "sitting_standing" -> ContextCompat.getDrawable(this, R.drawable.sitting)
+                    "normal_walking" -> ContextCompat.getDrawable(this, R.drawable.walking)
+                    "running_normal" -> ContextCompat.getDrawable(this, R.drawable.running)
+                    //"standing" -> ContextCompat.getDrawable(this, R.drawable.man_standing)
+                    "ascending_stairs" -> ContextCompat.getDrawable(this, R.drawable.ascending_stairs)
+                    "descending_stairs" -> ContextCompat.getDrawable(this, R.drawable.descending_stairs)
+                    "lying_down_back" -> ContextCompat.getDrawable(this, R.drawable.lying_down_on_back)
+                    "lying_down_left" -> ContextCompat.getDrawable(this, R.drawable.lying_down_left)
+                    "lying_down_right" -> ContextCompat.getDrawable(this, R.drawable.lying_down_on_right)
+                    "lying_down_stomach" -> ContextCompat.getDrawable(this, R.drawable.lying_down_stomach)
+                    "misc_movement" -> ContextCompat.getDrawable(this, R.drawable.miscellaneous)
+                    "shuffle_walking" -> ContextCompat.getDrawable(this, R.drawable.shuffle_walking)
+                    else -> ContextCompat.getDrawable(this, R.drawable.man_standing) // Default drawable
+                }
+
+                if (drawable != null) {
+                    activityIcon.setImageDrawable(drawable)
+                    activityIcon.invalidate()  // Force redraw
+                    activityIcon.requestLayout() // Request a layout pass
+                }
+
+                Log.d("IconUpdate", "Drawable constant state after update: ${activityIcon.drawable?.constantState}")
+                // Update tracking variables
+                lastActivity = activity
+                lastUpdateTime = currentTime
             }
         }
     }

@@ -11,7 +11,7 @@
 
         <!-- Icon of a man sitting -->
         <ImageView
-            android:id="@+id/sitting_icon"
+            android:id="@+id/standing_icon"
             android:layout_width="170dp"
             android:layout_height="170dp"
             android:src="@drawable/man_standing"
