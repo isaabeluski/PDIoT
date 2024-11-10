@@ -68,27 +68,27 @@ class LiveDataActivity : AppCompatActivity() {
     val respeckBuffer = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
 
-    val WINDOW_SIZE = 50  // Define the window size as 50
+    val WINDOW_SIZE = 100  // Define the window size as 50
 
     val activities = mapOf(
-        0 to "ascending_stairs",
-        1 to "shuffle_walking",
-        2 to "sitting_standing",
-        3 to "misc_movement",
-        4 to "normal_walking",
-        5 to "running_normal",
-        6 to "descending_stairs",
-        7 to "lying_down_right",
-        8 to "lying_down_left",
-        9 to "lying_down_stomach",
-        10 to "lying_down_back"
+        0 to "Ascending stairs",
+        1 to "Shuffle walking",
+        2 to "Sitting / Standing",
+        3 to "Miscellaneous",
+        4 to "Walking",
+        5 to "Running",
+        6 to "Descending stairs",
+        7 to "Lying down right",
+        8 to "Lying down left",
+        9 to "Lying down stomach",
+        10 to "Lying down back"
     )
 
     lateinit var interpreter: Interpreter
 
     // Function to load the model file
     fun loadModelFile(): MappedByteBuffer {
-        val fileDescriptor: AssetFileDescriptor = assets.openFd("model.tflite")
+        val fileDescriptor: AssetFileDescriptor = assets.openFd("respeck_6_100epochs_100windowsize_4layers.tflite")
         val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
         val fileChannel: FileChannel = inputStream.channel
         val startOffset: Long = fileDescriptor.startOffset
@@ -175,18 +175,16 @@ class LiveDataActivity : AppCompatActivity() {
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
 
-                        // Clear the buffer
+                        // Remove the first element from the buffer
+                        respeckBuffer.removeAt(0)
 
-                        respeckBuffer.clear()
 
                         displayDetectedActivity(detectedActivityLabel)
                         updateIconBasedOnActivity(detectedActivityLabel)
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
-
                     }
-
                 }
             }
         }
@@ -251,9 +249,8 @@ class LiveDataActivity : AppCompatActivity() {
                         val detectedActivityIndex = getDetectedActivityIndex(output[0])
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
-                        // Clear the buffer
-
-                        thingyBuffer.clear()
+                        // Remove the first element from the buffer
+                        thingyBuffer.removeAt(0)
 
                         displayDetectedActivity(detectedActivityLabel)
 //                        updateIconBasedOnActivity(detectedActivityLabel)
@@ -261,9 +258,7 @@ class LiveDataActivity : AppCompatActivity() {
 //                        // Print the detected activity
                         Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
                         Log.d("Detected Activity Thingy", detectedActivityLabel)
-
                     }
-
                 }
             }
         }
