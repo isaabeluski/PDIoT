@@ -72,23 +72,31 @@ class LiveDataActivity : AppCompatActivity() {
 
     val activities = mapOf(
         0 to "Ascending stairs",
-        1 to "Shuffle walking",
-        2 to "Sitting / Standing",
-        3 to "Miscellaneous",
-        4 to "Walking",
-        5 to "Running",
-        6 to "Descending stairs",
-        7 to "Lying down right",
-        8 to "Lying down left",
-        9 to "Lying down stomach",
-        10 to "Lying down back"
+        1 to "Descending stairs",
+        2 to "Lying down back",
+        3 to "Lying down left",
+        4 to "Lying down right ",
+        5 to "Lying down stomach",
+        6 to "Miscellaneous",
+        7 to "Walking",
+        8 to "Running",
+        9 to "Shuffle walking",
+        10 to "Sitting / Standing"
     )
 
-    lateinit var interpreter: Interpreter
+    val respiratoryConditions = mapOf(
+        0 to "Normal",
+        1 to "Coughing",
+        2 to "Hyperventilation",
+        3 to "Other"
+    )
 
-    // Function to load the model file
-    fun loadModelFile(): MappedByteBuffer {
-        val fileDescriptor: AssetFileDescriptor = assets.openFd("respeck_6_100epochs_100windowsize_4layers.tflite")
+    lateinit var interpreterActivity: Interpreter
+    lateinit var interpreterRespiratory: Interpreter
+
+    // Function to load the model file taken the model file name as input
+    fun loadModelFile(modelFileName: String): MappedByteBuffer {
+        val fileDescriptor: AssetFileDescriptor = assets.openFd(modelFileName)
         val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
         val fileChannel: FileChannel = inputStream.channel
         val startOffset: Long = fileDescriptor.startOffset
@@ -120,8 +128,10 @@ class LiveDataActivity : AppCompatActivity() {
 
         setupCharts()
 
-        val model = loadModelFile()
-        interpreter = Interpreter(model) // Initialize interpreter here
+        val modelActivity = loadModelFile("respeck_6_100epochs_100windowsize_4layers.tflite")
+        interpreterActivity = Interpreter(modelActivity) // Initialize interpreter here
+        val modelRespiratory = loadModelFile("model_respiratory.tflite")
+        interpreterRespiratory = Interpreter(modelRespiratory) // Initialize interpreter here
 
         // set up the broadcast receiver
         respeckLiveUpdateReceiver = object : BroadcastReceiver() {
@@ -165,15 +175,20 @@ class LiveDataActivity : AppCompatActivity() {
                         }
 
                         // Create the output array([ 1, 11], dtype=int32)
-                        val output = Array(1) { FloatArray(11) }
+                        val outputActivity = Array(1) { FloatArray(11) }
+                        val outputRespiratory = Array(1) { FloatArray(4) }
 
                         // Run the model
-                        interpreter.run(input, output)
+                        interpreterActivity.run(input, outputActivity)
+                        interpreterRespiratory.run(input, outputRespiratory)
 
                         // Get the detected activity index
-                        val detectedActivityIndex = getDetectedActivityIndex(output[0])
+                        val detectedActivityIndex = getDetectedActivityIndex(outputActivity[0])
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
+                        val detectedRespiratoryIndex = getDetectedActivityIndex(outputRespiratory[0])
+                        val detectedRespiratoryLabel = respiratoryConditions[detectedRespiratoryIndex] ?: "Unknown Respiratory Condition"
+                        // TODO need to display the respiratory condition in the app @Aloia
 
                         // Remove the first element from the buffer
                         respeckBuffer.removeAt(0)
@@ -184,6 +199,8 @@ class LiveDataActivity : AppCompatActivity() {
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
+                        Log.d("Detected Respiratory", detectedRespiratoryIndex.toString())
+                        Log.d("Detected Respiratory", detectedRespiratoryLabel)
                     }
                 }
             }
@@ -243,7 +260,7 @@ class LiveDataActivity : AppCompatActivity() {
                         val output = Array(1) { FloatArray(11) }
 
                         // Run the model
-                        interpreter.run(input, output)
+                        interpreterActivity.run(input, output)
 
                         // Get the detected activity index
                         val detectedActivityIndex = getDetectedActivityIndex(output[0])
