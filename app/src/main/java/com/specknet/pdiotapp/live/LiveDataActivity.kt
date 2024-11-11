@@ -71,17 +71,17 @@ class LiveDataActivity : AppCompatActivity() {
     val WINDOW_SIZE = 100  // Define the window size as 50
 
     val activities = mapOf(
-        0 to "Ascending stairs",
-        1 to "Descending stairs",
-        2 to "Lying down back",
-        3 to "Lying down left",
-        4 to "Lying down right ",
-        5 to "Lying down stomach",
-        6 to "Miscellaneous",
-        7 to "Walking",
-        8 to "Running",
-        9 to "Shuffle walking",
-        10 to "Sitting / Standing"
+        0 to "ascending_stairs",
+        1 to "descending_stairs",
+        2 to "lying_down_back",
+        3 to "lying_down_left",
+        4 to "lying_down_right",
+        5 to "lying_down_stomach",
+        6 to "misc_movement",
+        7 to "normal_walking",
+        8 to "running_normal",
+        9 to "shuffle_walking",
+        10 to "sitting_standing"
     )
 
     val respiratoryConditions = mapOf(
