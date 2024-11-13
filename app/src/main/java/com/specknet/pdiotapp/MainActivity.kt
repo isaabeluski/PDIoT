@@ -26,6 +26,7 @@ import com.specknet.pdiotapp.onboarding.OnBoardingActivity
 import com.specknet.pdiotapp.utils.Constants
 import com.specknet.pdiotapp.utils.Utils
 import kotlinx.android.synthetic.main.activity_main.*
+import com.specknet.pdiotapp.history.HistoryActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var liveProcessingButton: LinearLayout
     lateinit var pairingButton: LinearLayout
     lateinit var recordButton: LinearLayout
-    lateinit var sleepAnalysisButton: LinearLayout
+    lateinit var historyButton: LinearLayout
 
     // permissions
     lateinit var permissionAlertDialog: AlertDialog.Builder
@@ -71,13 +72,13 @@ class MainActivity : AppCompatActivity() {
         liveProcessingButton = findViewById(R.id.live_button)
         pairingButton = findViewById(R.id.ble_button)
         recordButton = findViewById(R.id.record_button)
-        sleepAnalysisButton = findViewById(R.id.sleep_button)
+        historyButton = findViewById(R.id.history_button)
 
         // Set text and icon for each button
         setButtonDetails(recordButton, "RECORD DATA", R.drawable.ic_recording_icon)
         setButtonDetails(liveProcessingButton, "WATCH LIVE PROCESSING", R.drawable.ic_live_data_icon)
         setButtonDetails(pairingButton, "CONNECT SENSORS", R.drawable.ic_bluetooth_icon)
-        setButtonDetails(sleepAnalysisButton, "SLEEP ANALYSIS", R.drawable.ic_moon_icon)
+        setButtonDetails(historyButton, "HISTORY", R.drawable.calendar)
 
         permissionAlertDialog = AlertDialog.Builder(this)
 
@@ -115,6 +116,11 @@ class MainActivity : AppCompatActivity() {
 
         recordButton.setOnClickListener {
             val intent = Intent(this, RecordingActivity::class.java)
+            startActivity(intent)
+        }
+
+        historyButton.setOnClickListener {
+            val intent = Intent(this, HistoryActivity::class.java)
             startActivity(intent)
         }
     }
@@ -222,6 +228,7 @@ class MainActivity : AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if(requestCode == Constants.REQUEST_CODE_PERMISSIONS) {
             if(grantResults.isNotEmpty()) {
                 for (i in grantResults.indices) {

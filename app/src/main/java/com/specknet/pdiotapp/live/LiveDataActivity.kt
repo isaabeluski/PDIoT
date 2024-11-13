@@ -43,7 +43,9 @@ class LiveDataActivity : AppCompatActivity() {
     lateinit var dataSet_thingy_accel_z: LineDataSet
 
     private lateinit var activityDisplayTextView: TextView
+    private lateinit var respiratoryConditionDisplayTextView: TextView
     private lateinit var activityIcon: ImageView
+    private lateinit var respiratoryConditionIcon : ImageView
 
     var time = 0f
     lateinit var allRespeckData: LineData
@@ -59,8 +61,11 @@ class LiveDataActivity : AppCompatActivity() {
     lateinit var looperRespeck: Looper
     lateinit var looperThingy: Looper
 
-    private var lastUpdateTime = System.currentTimeMillis()
+    private var lastActivity = ""
+    private var lastRespiratoryCondition = ""
     private val updateInterval = 1000L
+    private var lastActivityUpdateTime = System.currentTimeMillis()
+    private var lastRespiratoryConditionUpdateTime = System.currentTimeMillis()
 
     val filterTestRespeck = IntentFilter(Constants.ACTION_RESPECK_LIVE_BROADCAST)
     val filterTestThingy = IntentFilter(Constants.ACTION_THINGY_BROADCAST)
@@ -77,7 +82,7 @@ class LiveDataActivity : AppCompatActivity() {
         1 to "descending_stairs",
         2 to "lying_down_back",
         3 to "lying_down_left",
-        4 to "lying_down_right",
+        4 to "lying_down_right ",
         5 to "lying_down_stomach",
         6 to "misc_movement",
         7 to "normal_walking",
@@ -123,7 +128,9 @@ class LiveDataActivity : AppCompatActivity() {
         setContentView(R.layout.activity_live_data)
 
         activityDisplayTextView = findViewById(R.id.activity_display)
+        respiratoryConditionDisplayTextView = findViewById(R.id.social_sign_display)
         activityIcon = findViewById(R.id.standing_icon)
+        respiratoryConditionIcon = findViewById(R.id.normal_breathing_icon)
         Log.d("IconUpdate", "activityIcon initialized: ${activityIcon != null}")
         Log.d("IconUpdate", "Current drawable resource ID: ${activityIcon.drawable}")
 
@@ -179,6 +186,7 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Create the output array([ 1, 11], dtype=int32)
                         val outputActivity = Array(1) { FloatArray(11) }
+                        val outputRespiratory = Array(1) { FloatArray(4) }
 
                         // Run the model
                         interpreterActivity.run(inputActivity, outputActivity)
@@ -193,8 +201,11 @@ class LiveDataActivity : AppCompatActivity() {
                         // Remove the first element from the buffer
                         respeckBufferActivity.removeAt(0)
 
-                        displayDetectedActivity(detectedActivityLabel)
-                        updateIconBasedOnActivity(detectedActivityLabel)
+//                        displayDetectedActivity(detectedActivityLabel)
+//                        displayDetectedRespiratoryCondition(detectedRespiratoryLabel)
+//                        updateIconBasedOnActivity(detectedActivityLabel)
+//                        updateIconBasedOnRespiratoryCondition(detectedRespiratoryLabel)
+                        updateDetectedActivity(detectedActivityLabel)
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
@@ -231,6 +242,8 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Remove the first element from the buffer
                         respeckBufferRespiratory.removeAt(0)
+
+                        updateDetectedRespiratoryCondition(detectedRespiratoryLabel)
 
                         // Print the detected respiratory condition
                         Log.d("Detected Respiratory Condition", detectedRespiratoryIndex.toString())
@@ -296,20 +309,28 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Run the model
                         interpreterActivity.run(input, output)
+                        interpreterRespiratory.run(input, output)
 
                         // Get the detected activity index
                         val detectedActivityIndex = getDetectedActivityIndex(output[0])
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
+                        val detectedRespiratoryIndex = getDetectedActivityIndex(output[0])
+                        val detectedRespiratoryLabel = respiratoryConditions[detectedRespiratoryIndex] ?: "Unknown Respiratory Condition"
 
                         // Remove the first element from the buffer
                         thingyBuffer.removeAt(0)
 
-                        displayDetectedActivity(detectedActivityLabel)
-                        updateIconBasedOnActivity(detectedActivityLabel)
-
+//                        displayDetectedActivity(detectedActivityLabel)
+//                        displayDetectedRespiratoryCondition(detectedRespiratoryLabel)
+                        updateDetectedActivity(detectedActivityLabel)
+                        updateDetectedRespiratoryCondition(detectedRespiratoryLabel)
+//                        updateIconBasedOnActivity(detectedActivityLabel)
+//
 //                        // Print the detected activity
                         Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
                         Log.d("Detected Activity Thingy", detectedActivityLabel)
+                        Log.d("Detected Respiratory Thingy", detectedRespiratoryIndex.toString())
+                        Log.d("Detected Respiratory Thingy", detectedRespiratoryLabel)
                     }
                 }
             }
@@ -325,29 +346,14 @@ class LiveDataActivity : AppCompatActivity() {
     }
 
 
-    private fun displayDetectedActivity(activityLabel: String) {
+    private fun updateDetectedActivity(activityLabel: String) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastUpdateTime >= updateInterval) {
+        if (activityLabel != lastActivity && currentTime - lastActivityUpdateTime >= updateInterval) {
             runOnUiThread {
                 activityDisplayTextView.text = "Current Activity: $activityLabel"
-            }
-            lastUpdateTime = currentTime
-        }
-    }
 
-    private var lastActivity = ""
-
-    private fun updateIconBasedOnActivity(activity: String) {
-        val currentTime = System.currentTimeMillis()
-        Log.d("IconUpdate", "Updating icon for activity: $activity")
-
-        Log.d("IconUpdate", "Checking condition: activity != lastActivity -> ${activity != lastActivity}")
-        //Log.d("IconUpdate", "Checking condition: currentTime - lastUpdateTime >= updateInterval -> ${currentTime - lastUpdateTime >= updateInterval}")
-        // Only update if activity changes or if at least 1 second has passed since the last update
-        if (activity != lastActivity) {
-            runOnUiThread {
-                Log.d("IconUpdate", "Setting icon for: $activity")
-                val drawable = when (activity) {
+                // Update the icon based on the activity label
+                val drawable = when (activityLabel) {
                     "sitting_standing" -> ContextCompat.getDrawable(this, R.drawable.sitting)
                     "normal_walking" -> ContextCompat.getDrawable(this, R.drawable.walking)
                     "running_normal" -> ContextCompat.getDrawable(this, R.drawable.running)
@@ -362,18 +368,36 @@ class LiveDataActivity : AppCompatActivity() {
                     "shuffle_walking" -> ContextCompat.getDrawable(this, R.drawable.shuffle_walking)
                     else -> ContextCompat.getDrawable(this, R.drawable.man_standing) // Default drawable
                 }
-
-                if (drawable != null) {
-                    activityIcon.setImageDrawable(drawable)
-                    activityIcon.invalidate()  // Force redraw
-                    activityIcon.requestLayout() // Request a layout pass
-                }
-
-                Log.d("IconUpdate", "Drawable constant state after update: ${activityIcon.drawable?.constantState}")
-                // Update tracking variables
-                lastActivity = activity
-                lastUpdateTime = currentTime
+                activityIcon.setImageDrawable(drawable)
+                activityIcon.invalidate()
+                activityIcon.requestLayout()
             }
+            // Update tracking variables
+            lastActivity = activityLabel
+            lastActivityUpdateTime = currentTime
+        }
+    }
+
+    private fun updateDetectedRespiratoryCondition(respiratoryConditionLabel: String) {
+        val currentTime = System.currentTimeMillis()
+        if (respiratoryConditionLabel != lastRespiratoryCondition && currentTime - lastRespiratoryConditionUpdateTime >= updateInterval) {
+            runOnUiThread {
+                respiratoryConditionDisplayTextView.text = "Current Respiratory Condition: $respiratoryConditionLabel"
+
+                // Update the icon based on the respiratory condition label
+                val drawable = when (respiratoryConditionLabel) {
+                    "Coughing" -> ContextCompat.getDrawable(this, R.drawable.coughing)
+                    "Hyperventilation" -> ContextCompat.getDrawable(this, R.drawable.hyperventilating)
+                    "Other" -> ContextCompat.getDrawable(this, R.drawable.singing)
+                    else -> ContextCompat.getDrawable(this, R.drawable.normal_breathing) // Default drawable
+                }
+                respiratoryConditionIcon.setImageDrawable(drawable)
+                respiratoryConditionIcon.invalidate()
+                respiratoryConditionIcon.requestLayout()
+            }
+            // Update tracking variables
+            lastRespiratoryCondition = respiratoryConditionLabel
+            lastRespiratoryConditionUpdateTime = currentTime
         }
     }
 
