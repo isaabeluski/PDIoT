@@ -65,10 +65,12 @@ class LiveDataActivity : AppCompatActivity() {
     val filterTestRespeck = IntentFilter(Constants.ACTION_RESPECK_LIVE_BROADCAST)
     val filterTestThingy = IntentFilter(Constants.ACTION_THINGY_BROADCAST)
 
-    val respeckBuffer = ArrayList<FloatArray>()  // Buffer for Respeck data
+    val respeckBufferActivity = ArrayList<FloatArray>()  // Buffer for Respeck data
+    val respeckBufferRespiratory = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
 
-    val WINDOW_SIZE = 100  // Define the window size as 50
+    val WINDOW_SIZE_ACTIVITY = 80
+    val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
 
     val activities = mapOf(
         0 to "ascending_stairs",
@@ -156,51 +158,84 @@ class LiveDataActivity : AppCompatActivity() {
                     updateGraph("respeck", x, y, z)
 
                     val respeckData = floatArrayOf(x, y, z)
-                    respeckBuffer.add(respeckData)
+                    respeckBufferActivity.add(respeckData)
+                    respeckBufferRespiratory.add(respeckData)
 
-                    Log.d("Live", "onReceive: respeckBuffer = " + respeckBuffer.size)
+                    Log.d("Live", "onReceive: respeckBuffer = " + respeckBufferActivity.size)
 
-                    if (respeckBuffer.size >= WINDOW_SIZE) {
+                    if (respeckBufferActivity.size >= WINDOW_SIZE_ACTIVITY) {
                         // Currently, buffer is of size (50, 3)
                         // We need to convert it to (1, 50, 3)
 
                         // Create the input and output arrays
-                        val input = Array(1) { Array(WINDOW_SIZE) { FloatArray(3) } }
+                        val inputActivity = Array(1) { Array(WINDOW_SIZE_ACTIVITY) { FloatArray(3) } }
 
                         // Convert the buffer to the input array
-                        for (i in 0 until WINDOW_SIZE) {
-                            input[0][i][0] = respeckBuffer[i][0]
-                            input[0][i][1] = respeckBuffer[i][1]
-                            input[0][i][2] = respeckBuffer[i][2]
+                        for (i in 0 until WINDOW_SIZE_ACTIVITY) {
+                            inputActivity[0][i][0] = respeckBufferActivity[i][0]
+                            inputActivity[0][i][1] = respeckBufferActivity[i][1]
+                            inputActivity[0][i][2] = respeckBufferActivity[i][2]
                         }
 
                         // Create the output array([ 1, 11], dtype=int32)
                         val outputActivity = Array(1) { FloatArray(11) }
-                        val outputRespiratory = Array(1) { FloatArray(4) }
 
                         // Run the model
-                        interpreterActivity.run(input, outputActivity)
-                        interpreterRespiratory.run(input, outputRespiratory)
+                        interpreterActivity.run(inputActivity, outputActivity)
 
                         // Get the detected activity index
                         val detectedActivityIndex = getDetectedActivityIndex(outputActivity[0])
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
-                        val detectedRespiratoryIndex = getDetectedActivityIndex(outputRespiratory[0])
-                        val detectedRespiratoryLabel = respiratoryConditions[detectedRespiratoryIndex] ?: "Unknown Respiratory Condition"
+
                         // TODO need to display the respiratory condition in the app @Aloia
 
                         // Remove the first element from the buffer
-                        respeckBuffer.removeAt(0)
-
+                        respeckBufferActivity.removeAt(0)
 
                         displayDetectedActivity(detectedActivityLabel)
                         updateIconBasedOnActivity(detectedActivityLabel)
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
-                        Log.d("Detected Respiratory", detectedRespiratoryIndex.toString())
-                        Log.d("Detected Respiratory", detectedRespiratoryLabel)
+
+                    }
+
+                    if (respeckBufferRespiratory.size >= WINDOW_SIZE_RESPIRATORY) {
+                        // Currently, buffer is of size (100, 3)
+                        // We need to convert it to (1, 100, 3)
+
+                        // Create the input and output arrays
+                        val inputRespiratory =
+                            Array(1) { Array(WINDOW_SIZE_RESPIRATORY) { FloatArray(3) } }
+
+                        // Convert the buffer to the input array
+                        for (i in 0 until WINDOW_SIZE_RESPIRATORY) {
+                            inputRespiratory[0][i][0] = respeckBufferRespiratory[i][0]
+                            inputRespiratory[0][i][1] = respeckBufferRespiratory[i][1]
+                            inputRespiratory[0][i][2] = respeckBufferRespiratory[i][2]
+                        }
+
+                        // Create the output array([ 1, 4], dtype=int32)
+                        val outputRespiratory = Array(1) { FloatArray(4) }
+
+                        // Run the model
+                        interpreterRespiratory.run(inputRespiratory, outputRespiratory)
+
+                        // Get the detected respiratory condition index
+                        val detectedRespiratoryIndex =
+                            getDetectedActivityIndex(outputRespiratory[0])
+                        val detectedRespiratoryLabel =
+                            respiratoryConditions[detectedRespiratoryIndex]
+                                ?: "Unknown Respiratory Condition"
+
+                        // Remove the first element from the buffer
+                        respeckBufferRespiratory.removeAt(0)
+
+                        // Print the detected respiratory condition
+                        Log.d("Detected Respiratory Condition", detectedRespiratoryIndex.toString())
+                        Log.d("Detected Respiratory Condition", detectedRespiratoryLabel)
+
                     }
                 }
             }
@@ -242,15 +277,15 @@ class LiveDataActivity : AppCompatActivity() {
 
                     Log.d("Live", "onReceive: thingyBuffer = " + thingyBuffer.size)
 
-                    if (thingyBuffer.size >= WINDOW_SIZE) {
+                    if (thingyBuffer.size >= WINDOW_SIZE_ACTIVITY) {
                         // Currently, buffer is of size (50, 3)
                         // We need to convert it to (1, 50, 3)
 
                         // Create the input and output arrays
-                        val input = Array(1) { Array(WINDOW_SIZE) { FloatArray(3) } }
+                        val input = Array(1) { Array(WINDOW_SIZE_ACTIVITY) { FloatArray(3) } }
 
                         // Convert the buffer to the input array
-                        for (i in 0 until WINDOW_SIZE) {
+                        for (i in 0 until WINDOW_SIZE_ACTIVITY) {
                             input[0][i][0] = thingyBuffer[i][0]
                             input[0][i][1] = thingyBuffer[i][1]
                             input[0][i][2] = thingyBuffer[i][2]
@@ -270,8 +305,8 @@ class LiveDataActivity : AppCompatActivity() {
                         thingyBuffer.removeAt(0)
 
                         displayDetectedActivity(detectedActivityLabel)
-//                        updateIconBasedOnActivity(detectedActivityLabel)
-//
+                        updateIconBasedOnActivity(detectedActivityLabel)
+
 //                        // Print the detected activity
                         Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
                         Log.d("Detected Activity Thingy", detectedActivityLabel)
