@@ -20,6 +20,8 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.specknet.pdiotapp.R
+import com.specknet.pdiotapp.history.ActivityRecord
+import com.specknet.pdiotapp.history.AppDatabase
 import com.specknet.pdiotapp.utils.Constants
 import com.specknet.pdiotapp.utils.RESpeckLiveData
 import com.specknet.pdiotapp.utils.ThingyLiveData
@@ -28,6 +30,8 @@ import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import kotlin.collections.ArrayList
 import org.tensorflow.lite.Interpreter
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 
 class LiveDataActivity : AppCompatActivity() {
@@ -46,6 +50,10 @@ class LiveDataActivity : AppCompatActivity() {
     private lateinit var respiratoryConditionDisplayTextView: TextView
     private lateinit var activityIcon: ImageView
     private lateinit var respiratoryConditionIcon : ImageView
+
+    // Room database
+    private lateinit var database: AppDatabase
+
 
     var time = 0f
     lateinit var allRespeckData: LineData
@@ -124,6 +132,9 @@ class LiveDataActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_live_data)
+
+        // Room database
+        database = AppDatabase.getDatabase(this)
 
         activityDisplayTextView = findViewById(R.id.activity_display)
         respiratoryConditionDisplayTextView = findViewById(R.id.social_sign_display)
@@ -311,6 +322,14 @@ class LiveDataActivity : AppCompatActivity() {
 
     private fun updateDetectedActivity(activityLabel: String) {
         val currentTime = System.currentTimeMillis()
+
+        // room database
+        val record = ActivityRecord(activityLabel = activityLabel, timestamp = currentTime)
+
+        lifecycleScope.launch {
+            database.activityRecordDao().insertActivity(record)
+        }
+
         if (activityLabel != lastActivity && currentTime - lastActivityUpdateTime >= updateInterval) {
             runOnUiThread {
                 activityDisplayTextView.text = "Current Activity: $activityLabel"
