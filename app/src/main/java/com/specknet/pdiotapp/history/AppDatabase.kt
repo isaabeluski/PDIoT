@@ -8,9 +8,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@Database(entities = [ActivityRecord::class], version = 1, exportSchema = false)
+// Add SocialSignRecord to the entities
+@Database(entities = [ActivityRecord::class, SocialSignRecord::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun activityRecordDao(): ActivityRecordDao
+    abstract fun socialSignRecordDao(): SocialSignRecordDao // Add DAO for Social Signs
 
     companion object {
         @Volatile
@@ -24,10 +26,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "activity_database"
                 )
-                    // Add this line to log or perform actions when the database is created
                     .addCallback(DatabaseCallback())
-                    // Uncomment the line below for destructive migration during schema changes
-                    // .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // Allows database recreation during schema changes
                     .build()
                 INSTANCE = instance
                 instance
@@ -38,16 +38,15 @@ abstract class AppDatabase : RoomDatabase() {
         private class DatabaseCallback : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                // Log or perform actions when the database is created
                 println("Database has been created successfully!")
             }
 
             override fun onOpen(db: SupportSQLiteDatabase) {
                 super.onOpen(db)
-                // Actions every time the database is opened
                 println("Database has been opened!")
             }
         }
     }
 }
+
 

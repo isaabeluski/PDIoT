@@ -50,41 +50,71 @@ class HistoryActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val historyData = database.activityRecordDao().getAllActivities()
+                val activityData = database.activityRecordDao().getAllActivities()
+                val socialSignData = database.socialSignRecordDao().getAllSocialSigns()
 
-                if (historyData.isNotEmpty()) {
-                    val groupedData = historyData.groupBy { record ->
+                if (activityData.isNotEmpty() || socialSignData.isNotEmpty()) {
+                    val groupedActivities = activityData.groupBy { record ->
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        dateFormat.format(record.timestamp)
+                    }
+
+                    val groupedSocialSigns = socialSignData.groupBy { record ->
                         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         dateFormat.format(record.timestamp)
                     }
 
                     val displayText = StringBuilder()
-                    for ((date, activities) in groupedData) {
-                        displayText.append("<b>Date: $date</b><br>")
 
-                        val activitySummary = activities.groupBy { it.activityLabel }
-                            .mapValues { (_, records) -> records.size }
+                    for (date in groupedActivities.keys.union(groupedSocialSigns.keys)) {
+                        displayText.append("<b><big>Date: $date</big></b><br>")
 
-                        for ((activity, count) in activitySummary) {
-                            val formattedActivity = activity.split("_").joinToString(" ") {
-                                it.lowercase().replaceFirstChar { char -> char.uppercase() }
+                        // Display activities for this date
+                        groupedActivities[date]?.let { activities ->
+                            displayText.append("<b>Activities:</b><br>")
+                            val activitySummary = activities.groupBy { it.activityLabel }
+                                .mapValues { (_, records) -> records.size }
+
+                            for ((activity, count) in activitySummary) {
+                                val formattedActivity = activity.split("_").joinToString(" ") {
+                                    it.lowercase().replaceFirstChar { char -> char.uppercase() }
+                                }
+                                val hours = count / 3600
+                                val minutes = (count % 3600) / 60
+                                val seconds = count % 60
+                                displayText.append("$formattedActivity: ${hours.toString().padStart(2, '0')}h:" +
+                                        "${minutes.toString().padStart(2, '0')}min:" +
+                                        "${seconds.toString().padStart(2, '0')}s<br>")
                             }
-                            val hours = count / 3600
-                            val minutes = (count % 3600) / 60
-                            val seconds = count % 60
 
-                            // Format as "00h:00min:00s"
-                            displayText.append("$formattedActivity: ${hours.toString().padStart(2, '0')}h:" +
-                                    "${minutes.toString().padStart(2, '0')}min:" +
-                                    "${seconds.toString().padStart(2, '0')}s<br>")
+                            displayText.append("<br>")
                         }
 
-                        displayText.append("<hr><br>")
+                        // Display social signs for this date
+                        groupedSocialSigns[date]?.let { socialSigns ->
+                            displayText.append("<b>Social Signs:</b><br>")
+                            val socialSignSummary = socialSigns.groupBy { it.socialSignLabel }
+                                .mapValues { (_, records) -> records.size }
+
+                            for ((socialSign, count) in socialSignSummary) {
+                                val hours = count / 3600
+                                val minutes = (count % 3600) / 60
+                                val seconds = count % 60
+                                displayText.append("$socialSign: ${hours.toString().padStart(2, '0')}h:" +
+                                        "${minutes.toString().padStart(2, '0')}min:" +
+                                        "${seconds.toString().padStart(2, '0')}s<br>")
+                            }
+                        }
+
+                       // displayText.append("<hr><br>")
+                       // displayText.append("—".repeat(27) + "<br><br>")
+                        displayText.append("\u2500".repeat(31) + "<br><br>") // 50 is the approximate line length
+
                     }
 
                     historyTextView.text = android.text.Html.fromHtml(displayText.toString())
                 } else {
-                    historyTextView.text = "No activity data available."
+                    historyTextView.text = "No activity or social sign data available."
                 }
             } catch (e: Exception) {
                 historyTextView.text = "Error loading history."

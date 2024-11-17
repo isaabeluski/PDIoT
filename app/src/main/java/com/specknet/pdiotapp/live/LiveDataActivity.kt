@@ -32,6 +32,7 @@ import kotlin.collections.ArrayList
 import org.tensorflow.lite.Interpreter
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import com.specknet.pdiotapp.history.SocialSignRecord
 
 
 class LiveDataActivity : AppCompatActivity() {
@@ -415,6 +416,14 @@ class LiveDataActivity : AppCompatActivity() {
 
     private fun updateDetectedRespiratoryCondition(respiratoryConditionLabel: String) {
         val currentTime = System.currentTimeMillis()
+        val socialSignRecord = SocialSignRecord(
+            socialSignLabel = respiratoryConditionLabel,
+            timestamp = currentTime
+        )
+
+        lifecycleScope.launch {
+            database.socialSignRecordDao().insertSocialSign(socialSignRecord)
+        }
         if (respiratoryConditionLabel != lastRespiratoryCondition && currentTime - lastRespiratoryConditionUpdateTime >= updateInterval) {
             runOnUiThread {
                 respiratoryConditionDisplayTextView.text = "Current Respiratory Condition: $respiratoryConditionLabel"
