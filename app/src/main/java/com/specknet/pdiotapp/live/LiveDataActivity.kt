@@ -74,15 +74,16 @@ class LiveDataActivity : AppCompatActivity() {
     val respeckBufferRespiratory = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
 
-    val WINDOW_SIZE_ACTIVITY = 50  // Define the window size as 50
+    val WINDOW_SIZE_ACTIVITY = 80  // Define the window size as 50
     val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
+    val WINDOW_SIZE_THINGY = 50  // Define the window size as 50
 
     val activities = mapOf(
         0 to "ascending_stairs",
         1 to "descending_stairs",
         2 to "lying_down_back",
         3 to "lying_down_left",
-        4 to "lying_down_right ",
+        4 to "lying_down_right",
         5 to "lying_down_stomach",
         6 to "misc_movement",
         7 to "normal_walking",
@@ -98,8 +99,14 @@ class LiveDataActivity : AppCompatActivity() {
         3 to "Other"
     )
 
+    val sittingStanding = mapOf(
+        0 to "Sitting",
+        1 to "Standing"
+    )
+
     lateinit var interpreterActivity: Interpreter
     lateinit var interpreterRespiratory: Interpreter
+    lateinit var interpreterSittingStanding: Interpreter
 
     // Function to load the model file taken the model file name as input
     fun loadModelFile(modelFileName: String): MappedByteBuffer {
@@ -137,10 +144,12 @@ class LiveDataActivity : AppCompatActivity() {
 
         setupCharts()
 
-        val modelActivity = loadModelFile("model.tflite")
+        val modelActivity = loadModelFile("respeck_7_110epochs_80windowsize_2layers.tflite")
         interpreterActivity = Interpreter(modelActivity) // Initialize interpreter here
         val modelRespiratory = loadModelFile("model_respiratory.tflite")
         interpreterRespiratory = Interpreter(modelRespiratory) // Initialize interpreter here
+        val modelSittingStanding = loadModelFile("thingy_1_sittingStanding_50epochs.tflite")
+        interpreterSittingStanding = Interpreter(modelSittingStanding) // Initialize interpreter here
 
         // set up the broadcast receiver
         respeckLiveUpdateReceiver = object : BroadcastReceiver() {
@@ -186,7 +195,6 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Create the output array([ 1, 11], dtype=int32)
                         val outputActivity = Array(1) { FloatArray(11) }
-//                        val outputRespiratory = Array(1) { FloatArray(4) }
 
                         // Run the model
                         interpreterActivity.run(inputActivity, outputActivity)
@@ -196,16 +204,44 @@ class LiveDataActivity : AppCompatActivity() {
                         val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
 
 
-                        // TODO need to display the respiratory condition in the app @Aloia
-
                         // Remove the first element from the buffer
                         respeckBufferActivity.removeAt(0)
 
-//                        displayDetectedActivity(detectedActivityLabel)
-//                        displayDetectedRespiratoryCondition(detectedRespiratoryLabel)
-//                        updateIconBasedOnActivity(detectedActivityLabel)
-//                        updateIconBasedOnRespiratoryCondition(detectedRespiratoryLabel)
+//                        if (detectedActivityLabel == "sitting_standing") {
+//                            // Get the detected activity index from the thingy model, checking first if the buffer is full
+//                            if (thingyBuffer.size == WINDOW_SIZE_THINGY) {
+//                                // Create the input and output arrays
+//                                val inputSittingStanding = Array(1) { Array(WINDOW_SIZE_THINGY) { FloatArray(3) } }
+//
+//                                // Convert the buffer to the input array
+//                                for (i in 0 until WINDOW_SIZE_THINGY) {
+//                                    inputSittingStanding[0][i][0] = thingyBuffer[i][0]
+//                                    inputSittingStanding[0][i][1] = thingyBuffer[i][1]
+//                                    inputSittingStanding[0][i][2] = thingyBuffer[i][2]
+//                                }
+//
+//                                // Create the output array([ 1, 11], dtype=int32)
+//                                val outputSittingStanding = Array(1) { FloatArray(2) }
+//
+//                                // Run the model
+//                                interpreterSittingStanding.run(inputSittingStanding, outputSittingStanding)
+//
+//                                // Get the detected activity index
+//                                val detectedSittingStandingIndex = getDetectedActivityIndex(outputSittingStanding[0])
+//                                val detectedSittingStandingLabel = sittingStanding[detectedSittingStandingIndex] ?: "Unknown Activity"
+//
+//                                updateDetectedActivity(detectedSittingStandingLabel)
+//                                // Print the detected activity
+//                                Log.d("Detected SittingStanding", detectedSittingStandingIndex.toString())
+//                            }
+//                        }
+//
+//                        else {
+//                            updateDetectedActivity(detectedActivityLabel)
+//                        }
+
                         updateDetectedActivity(detectedActivityLabel)
+
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
                         Log.d("Detected Activity", detectedActivityLabel)
@@ -290,47 +326,13 @@ class LiveDataActivity : AppCompatActivity() {
 
                     Log.d("Live", "onReceive: thingyBuffer = " + thingyBuffer.size)
 
-                    if (thingyBuffer.size >= WINDOW_SIZE_ACTIVITY) {
+                    if (thingyBuffer.size >= WINDOW_SIZE_THINGY) {
                         // Currently, buffer is of size (50, 3)
                         // We need to convert it to (1, 50, 3)
-
-                        // Create the input and output arrays
-                        val input = Array(1) { Array(WINDOW_SIZE_ACTIVITY) { FloatArray(3) } }
-
-                        // Convert the buffer to the input array
-                        for (i in 0 until WINDOW_SIZE_ACTIVITY) {
-                            input[0][i][0] = thingyBuffer[i][0]
-                            input[0][i][1] = thingyBuffer[i][1]
-                            input[0][i][2] = thingyBuffer[i][2]
-                        }
-
-                        // Create the output array([ 1, 11], dtype=int32)
-                        val output = Array(1) { FloatArray(11) }
-
-                        // Run the model
-                        interpreterActivity.run(input, output)
-                        interpreterRespiratory.run(input, output)
-
-                        // Get the detected activity index
-                        val detectedActivityIndex = getDetectedActivityIndex(output[0])
-                        val detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
-                        val detectedRespiratoryIndex = getDetectedActivityIndex(output[0])
-                        val detectedRespiratoryLabel = respiratoryConditions[detectedRespiratoryIndex] ?: "Unknown Respiratory Condition"
 
                         // Remove the first element from the buffer
                         thingyBuffer.removeAt(0)
 
-//                        displayDetectedActivity(detectedActivityLabel)
-//                        displayDetectedRespiratoryCondition(detectedRespiratoryLabel)
-                        updateDetectedActivity(detectedActivityLabel)
-                        updateDetectedRespiratoryCondition(detectedRespiratoryLabel)
-//                        updateIconBasedOnActivity(detectedActivityLabel)
-//
-//                        // Print the detected activity
-                        Log.d("Detected Activity Thingy", detectedActivityIndex.toString())
-                        Log.d("Detected Activity Thingy", detectedActivityLabel)
-                        Log.d("Detected Respiratory Thingy", detectedRespiratoryIndex.toString())
-                        Log.d("Detected Respiratory Thingy", detectedRespiratoryLabel)
                     }
                 }
             }
