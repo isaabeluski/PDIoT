@@ -32,6 +32,7 @@ import kotlin.collections.ArrayList
 import org.tensorflow.lite.Interpreter
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import com.specknet.pdiotapp.history.SocialSignRecord
 
 
 class LiveDataActivity : AppCompatActivity() {
@@ -165,8 +166,8 @@ class LiveDataActivity : AppCompatActivity() {
         respiratoryConditionDisplayTextView = findViewById(R.id.social_sign_display)
         activityIcon = findViewById(R.id.standing_icon)
         respiratoryConditionIcon = findViewById(R.id.normal_breathing_icon)
-//        Log.d("IconUpdate", "activityIcon initialized: ${activityIcon != null}")
-//        Log.d("IconUpdate", "Current drawable resource ID: ${activityIcon.drawable}")
+        Log.d("IconUpdate", "activityIcon initialized: ${activityIcon != null}")
+        Log.d("IconUpdate", "Current drawable resource ID: ${activityIcon.drawable}")
 
 
         setupCharts()
@@ -448,6 +449,14 @@ class LiveDataActivity : AppCompatActivity() {
 
     private fun updateDetectedRespiratoryCondition(respiratoryConditionLabel: String) {
         val currentTime = System.currentTimeMillis()
+        val socialSignRecord = SocialSignRecord(
+            socialSignLabel = respiratoryConditionLabel,
+            timestamp = currentTime
+        )
+
+        lifecycleScope.launch {
+            database.socialSignRecordDao().insertSocialSign(socialSignRecord)
+        }
         if (respiratoryConditionLabel != lastRespiratoryCondition && currentTime - lastRespiratoryConditionUpdateTime >= updateInterval) {
             runOnUiThread {
                 respiratoryConditionDisplayTextView.text = "Current Respiratory Condition: $respiratoryConditionLabel"
