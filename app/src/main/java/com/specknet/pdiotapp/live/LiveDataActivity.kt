@@ -82,22 +82,36 @@ class LiveDataActivity : AppCompatActivity() {
     val respeckBufferRespiratory = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
 
-    val WINDOW_SIZE_ACTIVITY = 80  // Define the window size as 50
+    val WINDOW_SIZE_ACTIVITY = 50  // Define the window size as 50
     val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
     val WINDOW_SIZE_THINGY = 50  // Define the window size as 50
 
+//    val activities = mapOf(
+//        0 to "ascending_stairs",
+//        1 to "descending_stairs",
+//        2 to "lying_down_back",
+//        3 to "lying_down_left",
+//        4 to "lying_down_right",
+//        5 to "lying_down_stomach",
+//        6 to "misc_movement",
+//        7 to "normal_walking",
+//        8 to "running_normal",
+//        9 to "shuffle_walking",
+//        10 to "sitting_standing"
+//    )
+
     val activities = mapOf(
         0 to "ascending_stairs",
-        1 to "descending_stairs",
-        2 to "lying_down_back",
-        3 to "lying_down_left",
-        4 to "lying_down_right",
-        5 to "lying_down_stomach",
-        6 to "misc_movement",
-        7 to "normal_walking",
-        8 to "running_normal",
-        9 to "shuffle_walking",
-        10 to "sitting_standing"
+        1 to "shuffle_walking",
+        2 to "sitting_standing",
+        3 to "misc_movement",
+        4 to "normal_walking",
+        5 to "running_normal",
+        6 to "descending_stairs",
+        7 to "lying_down_right",
+        8 to "lying_down_left",
+        9 to "lying_down_stomach",
+        10 to "lying_down_back"
     )
 
     val respiratoryConditions = mapOf(
@@ -155,7 +169,7 @@ class LiveDataActivity : AppCompatActivity() {
 
         setupCharts()
 
-        val modelActivity = loadModelFile("respeck_7_110epochs_80windowsize_2layers.tflite")
+        val modelActivity = loadModelFile("model.tflite")
         interpreterActivity = Interpreter(modelActivity) // Initialize interpreter here
         val modelRespiratory = loadModelFile("model_respiratory.tflite")
         interpreterRespiratory = Interpreter(modelRespiratory) // Initialize interpreter here

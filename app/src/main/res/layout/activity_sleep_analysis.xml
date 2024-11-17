@@ -1,23 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="16dp">
 
-    <LinearLayout
+    <!-- Search Bar -->
+    <EditText
+        android:id="@+id/search_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:hint="Search by date (YYYY-MM-DD)"
+        android:padding="8dp"
+        android:inputType="text"
+        android:background="@android:color/white"
+        android:textColor="@android:color/black"
+        android:textColorHint="@android:color/darker_gray"
+        android:elevation="4dp" />
 
-        <TextView
-            android:id="@+id/history_text_view"
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading activity history..."
-            android:textSize="16sp"
-            android:padding="8dp" />
-    </LinearLayout>
+            android:orientation="vertical">
 
-</ScrollView>
+            <!-- TextView to display the history -->
+            <TextView
+                android:id="@+id/history_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
+
+
+
 
