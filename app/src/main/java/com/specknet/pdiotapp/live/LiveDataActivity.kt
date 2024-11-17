@@ -74,7 +74,7 @@ class LiveDataActivity : AppCompatActivity() {
     val respeckBufferRespiratory = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
 
-    val WINDOW_SIZE_ACTIVITY = 80
+    val WINDOW_SIZE_ACTIVITY = 50  // Define the window size as 50
     val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
 
     val activities = mapOf(
@@ -137,7 +137,7 @@ class LiveDataActivity : AppCompatActivity() {
 
         setupCharts()
 
-        val modelActivity = loadModelFile("respeck_6_100epochs_100windowsize_4layers.tflite")
+        val modelActivity = loadModelFile("model.tflite")
         interpreterActivity = Interpreter(modelActivity) // Initialize interpreter here
         val modelRespiratory = loadModelFile("model_respiratory.tflite")
         interpreterRespiratory = Interpreter(modelRespiratory) // Initialize interpreter here
@@ -186,7 +186,7 @@ class LiveDataActivity : AppCompatActivity() {
 
                         // Create the output array([ 1, 11], dtype=int32)
                         val outputActivity = Array(1) { FloatArray(11) }
-                        val outputRespiratory = Array(1) { FloatArray(4) }
+//                        val outputRespiratory = Array(1) { FloatArray(4) }
 
                         // Run the model
                         interpreterActivity.run(inputActivity, outputActivity)
