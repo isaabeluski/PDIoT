@@ -123,44 +123,89 @@ class HistoryActivity : AppCompatActivity() {
         }
     }
 
-    private fun filterHistoryByDate(date: String, historyTextView: TextView) {
+    private fun filterHistoryByDate(query: String, historyTextView: TextView) {
         lifecycleScope.launch {
             try {
-                val historyData = database.activityRecordDao().getAllActivities()
-                val filteredData = historyData.filter { record ->
+                val activityData = database.activityRecordDao().getAllActivities()
+                val socialSignData = database.socialSignRecordDao().getAllSocialSigns()
+
+                // Filter activities by partial match in the date
+                val filteredActivities = activityData.filter { record ->
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val recordDate = dateFormat.format(record.timestamp)
-                    recordDate == date
+                    recordDate.contains(query, ignoreCase = true) // Check if the query is in the date
                 }
 
-                if (filteredData.isNotEmpty()) {
-                    val groupedData = filteredData.groupBy { record ->
+                // Filter social signs by partial match in the date
+                val filteredSocialSigns = socialSignData.filter { record ->
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val recordDate = dateFormat.format(record.timestamp)
+                    recordDate.contains(query, ignoreCase = true) // Check if the query is in the date
+                }
+
+                if (filteredActivities.isNotEmpty() || filteredSocialSigns.isNotEmpty()) {
+                    val groupedActivities = filteredActivities.groupBy { record ->
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        dateFormat.format(record.timestamp)
+                    }
+
+                    val groupedSocialSigns = filteredSocialSigns.groupBy { record ->
                         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         dateFormat.format(record.timestamp)
                     }
 
                     val displayText = StringBuilder()
-                    for ((date, activities) in groupedData) {
-                        displayText.append("<b>Date: $date</b><br>")
+                    for (date in groupedActivities.keys.union(groupedSocialSigns.keys)) {
+                        // Date display
+                        displayText.append("<b><font size='6'>Date: $date</font></b><br>")
 
-                        val activitySummary = activities.groupBy { it.activityLabel }
-                            .mapValues { (_, records) -> records.size }
+                        // Display activities for this date
+                        groupedActivities[date]?.let { activities ->
+                            displayText.append("<b>Activities:</b><br>")
+                            val activitySummary = activities.groupBy { it.activityLabel }
+                                .mapValues { (_, records) -> records.size }
 
-                        for ((activity, count) in activitySummary) {
-                            val formattedActivity = activity.split("_").joinToString(" ") {
-                                it.lowercase().replaceFirstChar { char -> char.uppercase() }
+                            for ((activity, count) in activitySummary) {
+                                val formattedActivity = activity.split("_").joinToString(" ") {
+                                    it.lowercase().replaceFirstChar { char -> char.uppercase() }
+                                }
+                                val hours = count / 3600
+                                val minutes = (count % 3600) / 60
+                                val seconds = count % 60
+                                displayText.append(
+                                    "$formattedActivity: ${hours.toString().padStart(2, '0')}h:" +
+                                            "${minutes.toString().padStart(2, '0')}min:" +
+                                            "${seconds.toString().padStart(2, '0')}s<br>"
+                                )
                             }
-                            val minutes = count / 60
-                            val seconds = count % 60
-                            displayText.append("$formattedActivity: $minutes minutes and $seconds seconds<br>")
+
+                            displayText.append("<br>")
                         }
 
-                        displayText.append("<br>")
+                        // Display social signs for this date
+                        groupedSocialSigns[date]?.let { socialSigns ->
+                            displayText.append("<b>Social Signs:</b><br>")
+                            val socialSignSummary = socialSigns.groupBy { it.socialSignLabel }
+                                .mapValues { (_, records) -> records.size }
+
+                            for ((socialSign, count) in socialSignSummary) {
+                                val hours = count / 3600
+                                val minutes = (count % 3600) / 60
+                                val seconds = count % 60
+                                displayText.append(
+                                    "$socialSign: ${hours.toString().padStart(2, '0')}h:" +
+                                            "${minutes.toString().padStart(2, '0')}min:" +
+                                            "${seconds.toString().padStart(2, '0')}s<br>"
+                                )
+                            }
+                        }
+
+                        displayText.append("\u2500".repeat(31) + "<br><br>")
                     }
 
                     historyTextView.text = android.text.Html.fromHtml(displayText.toString())
                 } else {
-                    historyTextView.text = "No data found for $date."
+                    historyTextView.text = "No data found matching '$query'."
                 }
             } catch (e: Exception) {
                 historyTextView.text = "Error loading filtered history."
