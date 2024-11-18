@@ -79,7 +79,9 @@ class LiveDataActivity : AppCompatActivity() {
     val filterTestRespeck = IntentFilter(Constants.ACTION_RESPECK_LIVE_BROADCAST)
     val filterTestThingy = IntentFilter(Constants.ACTION_THINGY_BROADCAST)
 
-    val respeckBufferActivity = ArrayList<FloatArray>()  // Buffer for Respeck data
+    val respeckBufferStaticDynamic = ArrayList<FloatArray>()  // Buffer for Respeck data
+    val respeckBufferStatic = ArrayList<FloatArray>()  // Buffer for Respeck data
+    val respeckBufferDynamic = ArrayList<FloatArray>()  // Buffer for Respeck data
     val respeckBufferRespiratory = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
     lateinit var detectedSittingStandingLabel: String
@@ -87,23 +89,25 @@ class LiveDataActivity : AppCompatActivity() {
     private var lastThingyUpdateTime: Long = 0
 
 
-    val WINDOW_SIZE_ACTIVITY = 100  // Define the window size as 50
+    val WINDOW_SIZE_DYNAMIC_STATIC = 50  // Define the window size as 50
+    val WINDOW_SIZE_STATIC = 50  // Define the window size as 50
+    val WINDOW_SIZE_DYNAMIC = 50  // Define the window size as 50
     val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
     val WINDOW_SIZE_THINGY = 50  // Define the window size as 50
 
-    val activities = mapOf(
-        0 to "Ascending Stairs",
-        1 to "Descending Stairs",
-        2 to "Lying Down on Back",
-        3 to "Lying Down on Left",
-        4 to "Lying Down on Right",
-        5 to "Lying Down on Stomach",
-        6 to "Miscellaneous",
-        7 to "Normal Walking",
-        8 to "Normal Running",
-        9 to "Shuffle Walking",
-        10 to "Sitting / Standing"
-    )
+//    val activities = mapOf(
+//        0 to "Ascending Stairs",
+//        1 to "Descending Stairs",
+//        2 to "Lying Down on Back",
+//        3 to "Lying Down on Left",
+//        4 to "Lying Down on Right",
+//        5 to "Lying Down on Stomach",
+//        6 to "Miscellaneous",
+//        7 to "Normal Walking",
+//        8 to "Normal Running",
+//        9 to "Shuffle Walking",
+//        10 to "Sitting / Standing"
+//    )
 
 //    val activities = mapOf(
 //        0 to "Ascending Stairs",
@@ -119,6 +123,28 @@ class LiveDataActivity : AppCompatActivity() {
 //        10 to "Lying Down on Back"
 //    )
 
+    val staticDynamic = mapOf(
+        0 to "Dynamic",
+        1 to "Static"
+    )
+
+    val staticActivities = mapOf(
+        0 to "Lying Down on Back",
+        1 to "Lying Down on Left",
+        2 to "Lying Down on Right",
+        3 to "Lying Down on Stomach",
+        4 to "Sitting / Standing"
+    )
+
+    val dynamicActivities = mapOf(
+        0 to "Ascending Stairs",
+        1 to "Descending Stairs",
+        2 to "Normal Walking",
+        3 to "Normal Running",
+        4 to "Shuffle Walking",
+        5 to "Miscellaneous"
+    )
+
     val respiratoryConditions = mapOf(
         0 to "Normal",
         1 to "Coughing",
@@ -131,7 +157,9 @@ class LiveDataActivity : AppCompatActivity() {
         1 to "Standing"
     )
 
-    lateinit var interpreterActivity: Interpreter
+    lateinit var interpreterStaticDynamic: Interpreter
+    lateinit var interpreterStatic: Interpreter
+    lateinit var interpreterDynamic: Interpreter
     lateinit var interpreterRespiratory: Interpreter
     lateinit var interpreterSittingStanding: Interpreter
 
@@ -178,8 +206,12 @@ class LiveDataActivity : AppCompatActivity() {
 
         setupCharts()
 
-        val modelActivity = loadModelFile("respeck_10_120epochs_100windowsize_2layers.tflite")
-        interpreterActivity = Interpreter(modelActivity) // Initialize interpreter here
+        val modelStaticDynamic = loadModelFile("respeck_1_staticDynamic_50epochs_50-45windowsize_1layers_3ks.tflite")
+        interpreterStaticDynamic = Interpreter(modelStaticDynamic) // Initialize interpreter here
+        val modelStatic = loadModelFile("respeck_1_static_50epochs_50windowsize_1layers.tflite")
+        interpreterStatic = Interpreter(modelStatic) // Initialize interpreter here
+        val modelDynamic = loadModelFile("respeck_1_dynamic_100epochs_50windowsize_1layers.tflite")
+        interpreterDynamic = Interpreter(modelDynamic) // Initialize interpreter here
         val modelRespiratory = loadModelFile("model_respiratory.tflite")
         interpreterRespiratory = Interpreter(modelRespiratory) // Initialize interpreter here
         val modelSittingStanding = loadModelFile("thingy_3_sittingStanding_100epochs.tflite")
@@ -208,68 +240,125 @@ class LiveDataActivity : AppCompatActivity() {
                     updateGraph("respeck", x, y, z)
 
                     val respeckData = floatArrayOf(x, y, z)
-                    respeckBufferActivity.add(respeckData)
+                    respeckBufferStaticDynamic.add(respeckData)
+                    respeckBufferStatic.add(respeckData)
+                    respeckBufferDynamic.add(respeckData)
                     respeckBufferRespiratory.add(respeckData)
 
-                    Log.d("Live", "onReceive: respeckBuffer = " + respeckBufferActivity.size)
+                    Log.d("Live", "onReceive: respeckBuffer = " + respeckBufferStaticDynamic.size)
 
-                    if (respeckBufferActivity.size >= WINDOW_SIZE_ACTIVITY) {
+                    if (respeckBufferStaticDynamic.size >= WINDOW_SIZE_DYNAMIC_STATIC) {
                         // Currently, buffer is of size (50, 3)
                         // We need to convert it to (1, 50, 3)
 
                         // Create the input and output arrays
-                        val inputActivity = Array(1) { Array(WINDOW_SIZE_ACTIVITY) { FloatArray(3) } }
+                        val inputStaticDynamic = Array(1) { Array(WINDOW_SIZE_DYNAMIC_STATIC) { FloatArray(3) } }
 
                         // Convert the buffer to the input array
-                        for (i in 0 until WINDOW_SIZE_ACTIVITY) {
-                            inputActivity[0][i][0] = respeckBufferActivity[i][0]
-                            inputActivity[0][i][1] = respeckBufferActivity[i][1]
-                            inputActivity[0][i][2] = respeckBufferActivity[i][2]
+                        for (i in 0 until WINDOW_SIZE_DYNAMIC_STATIC) {
+                            inputStaticDynamic[0][i][0] = respeckBufferStaticDynamic[i][0]
+                            inputStaticDynamic[0][i][1] = respeckBufferStaticDynamic[i][1]
+                            inputStaticDynamic[0][i][2] = respeckBufferStaticDynamic[i][2]
                         }
 
                         // Create the output array([ 1, 11], dtype=int32)
-                        val outputActivity = Array(1) { FloatArray(11) }
+                        val outputActivity = Array(1) { FloatArray(2) }
 
                         // Run the model
-                        interpreterActivity.run(inputActivity, outputActivity)
+                        interpreterStaticDynamic.run(inputStaticDynamic, outputActivity)
 
                         // Get the detected activity index
                         val detectedActivityIndex = getDetectedActivityIndex(outputActivity[0])
-                        detectedActivityLabel = activities[detectedActivityIndex] ?: "Unknown Activity"
+                        detectedActivityLabel = staticDynamic[detectedActivityIndex] ?: "Unknown Activity"
 
 
                         // Remove the first element from the buffer
-                        respeckBufferActivity.removeAt(0)
+                        respeckBufferStaticDynamic.removeAt(0)
 
 
-                        if(detectedActivityLabel == "Sitting / Standing" && isThingyCollectingData()) {
+                        if(detectedActivityLabel == "Static") {
+                            if(respeckBufferStatic.size >= WINDOW_SIZE_STATIC) {
+                                // Create the input and output arrays
+                                val inputStatic = Array(1) { Array(WINDOW_SIZE_STATIC) { FloatArray(3) } }
 
-                            while (isThingyCollectingData()) {
-                                if (thingyBuffer.size >= WINDOW_SIZE_THINGY) {
-
-//                                if the thingy is connected, run the model
-                                    Log.d(
-                                        "Detected update",
-                                        "Thingy buffer size: ${thingyBuffer.size}"
-                                    )
-
-                                    updateDetectedActivity(detectedSittingStandingLabel)
-
-                                    // Print the detected activity
-                                    //                                Log.d("Detected Sitting Standing", detectedSittingStandingIndex.toString())
-                                    Log.d(
-                                        "Detected Sitting Standing",
-                                        "from Respeck site. Label: $detectedSittingStandingLabel"
-                                    )
-
-                                    break
+                                // Convert the buffer to the input array
+                                for (i in 0 until WINDOW_SIZE_STATIC) {
+                                    inputStatic[0][i][0] = respeckBufferStatic[i][0]
+                                    inputStatic[0][i][1] = respeckBufferStatic[i][1]
+                                    inputStatic[0][i][2] = respeckBufferStatic[i][2]
                                 }
+
+                                // Create the output array([ 1, 5], dtype=int32)
+                                val outputStatic = Array(1) { FloatArray(5) }
+
+                                // Run the model
+                                interpreterStatic.run(inputStatic, outputStatic)
+
+                                // Get the detected activity index
+                                val detectedActivityIndex = getDetectedActivityIndex(outputStatic[0])
+                                detectedActivityLabel = staticActivities[detectedActivityIndex] ?: "Unknown Activity"
+
+                                if(detectedActivityLabel == "Sitting / Standing" && isThingyCollectingData()) {
+
+                                    while (isThingyCollectingData()) {
+                                        if (thingyBuffer.size >= WINDOW_SIZE_THINGY) {
+//                                if the thingy is connected, run the model
+                                            Log.d(
+                                                "Detected update",
+                                                "Thingy buffer size: ${thingyBuffer.size}"
+                                            )
+                                            updateDetectedActivity(detectedSittingStandingLabel)
+                                            Log.d(
+                                                "Detected static",
+                                                "Detected activity: $detectedSittingStandingLabel"
+                                            )
+                                            break
+                                        }
+                                    }
+                                }
+                                else {
+                                    Log.d("Detected static", "Detected activity: $detectedActivityLabel")
+                                    updateDetectedActivity(detectedActivityLabel)
+                                }
+
                             }
                         }
                         else {
-                            Log.d("Detected update", "Detected activity: $detectedActivityLabel")
-                            updateDetectedActivity(detectedActivityLabel)
+                            if (respeckBufferDynamic.size >= WINDOW_SIZE_DYNAMIC) {
+                                // Create the input and output arrays
+                                val inputDynamic =
+                                    Array(1) { Array(WINDOW_SIZE_DYNAMIC) { FloatArray(3) } }
+
+                                // Convert the buffer to the input array
+                                for (i in 0 until WINDOW_SIZE_DYNAMIC) {
+                                    inputDynamic[0][i][0] = respeckBufferDynamic[i][0]
+                                    inputDynamic[0][i][1] = respeckBufferDynamic[i][1]
+                                    inputDynamic[0][i][2] = respeckBufferDynamic[i][2]
+                                }
+
+                                // Create the output array([ 1, 6], dtype=int32)
+                                val outputDynamic = Array(1) { FloatArray(6) }
+
+                                // Run the model
+                                interpreterDynamic.run(inputDynamic, outputDynamic)
+
+                                // Get the detected activity index
+                                val detectedActivityIndex =
+                                    getDetectedActivityIndex(outputDynamic[0])
+                                detectedActivityLabel =
+                                    dynamicActivities[detectedActivityIndex] ?: "Unknown Activity"
+
+                                Log.d(
+                                    "Detected dynamic",
+                                    "Detected activity: $detectedActivityLabel"
+                                )
+                                updateDetectedActivity(detectedActivityLabel)
+                            }
+
                         }
+
+                        respeckBufferStatic.removeAt(0)
+                        respeckBufferDynamic.removeAt(0)
 
                         // Print the detected activity
                         Log.d("Detected Activity", detectedActivityIndex.toString())
