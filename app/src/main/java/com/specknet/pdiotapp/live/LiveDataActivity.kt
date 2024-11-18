@@ -92,7 +92,7 @@ class LiveDataActivity : AppCompatActivity() {
     val WINDOW_SIZE_THINGY = 50  // Define the window size as 50
 
     val activities = mapOf(
-        0 to "Ascending Stairs",
+        0 to "Normal Walking",
         1 to "Descending Stairs",
         2 to "Lying Down on Back",
         3 to "Lying Down on Left",
