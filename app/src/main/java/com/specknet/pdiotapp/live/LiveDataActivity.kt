@@ -84,6 +84,8 @@ class LiveDataActivity : AppCompatActivity() {
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
     lateinit var detectedSittingStandingLabel: String
     lateinit var detectedActivityLabel: String
+    private var lastThingyUpdateTime: Long = 0
+
 
     val WINDOW_SIZE_ACTIVITY = 100  // Define the window size as 50
     val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
@@ -153,6 +155,10 @@ class LiveDataActivity : AppCompatActivity() {
             }
         }
         return activityIndex // Returns the index of the highest probability
+    }
+
+    private fun isThingyCollectingData(): Boolean {
+        return System.currentTimeMillis() - lastThingyUpdateTime < 1000 // active if data is received in the last second
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -236,20 +242,28 @@ class LiveDataActivity : AppCompatActivity() {
                         respeckBufferActivity.removeAt(0)
 
 
-                        if(detectedActivityLabel == "Sitting / Standing") {
-//                            if the thingy is connected, run the model
+                        if(detectedActivityLabel == "Sitting / Standing" && isThingyCollectingData()) {
 
-                            Log.d("Detected Update", "Thingy buffer size a: ${thingyBuffer.size}")
-                            if (thingyBuffer.size == WINDOW_SIZE_THINGY) {
+                            while (isThingyCollectingData()) {
+                                if (thingyBuffer.size >= WINDOW_SIZE_THINGY) {
+
 //                                if the thingy is connected, run the model
-                                Log.d("Detected update", "Thingy buffer size b: ${thingyBuffer.size}")
+                                    Log.d(
+                                        "Detected update",
+                                        "Thingy buffer size: ${thingyBuffer.size}"
+                                    )
 
-                                updateDetectedActivity(detectedSittingStandingLabel)
+                                    updateDetectedActivity(detectedSittingStandingLabel)
 
-                                // Print the detected activity
-//                                Log.d("Detected Sitting Standing", detectedSittingStandingIndex.toString())
-                                Log.d("Detected Sitting Standing", "from Respeck site. Label: $detectedSittingStandingLabel")
+                                    // Print the detected activity
+                                    //                                Log.d("Detected Sitting Standing", detectedSittingStandingIndex.toString())
+                                    Log.d(
+                                        "Detected Sitting Standing",
+                                        "from Respeck site. Label: $detectedSittingStandingLabel"
+                                    )
 
+                                    break
+                                }
                             }
                         }
                         else {
@@ -303,8 +317,9 @@ class LiveDataActivity : AppCompatActivity() {
                                     ?: "Unknown Respiratory Condition"
 
                             // Remove the first element from the buffer
+                            for (i in 0 until 10) {
                             respeckBufferRespiratory.removeAt(0)
-
+                            }
                             updateDetectedRespiratoryCondition(detectedRespiratoryLabel)
 
                             // Print the detected respiratory condition
@@ -337,6 +352,8 @@ class LiveDataActivity : AppCompatActivity() {
                 val action = intent.action
 
                 if (action == Constants.ACTION_THINGY_BROADCAST) {
+
+                    lastThingyUpdateTime = System.currentTimeMillis()
 
                     val liveData =
                         intent.getSerializableExtra(Constants.THINGY_LIVE_DATA) as ThingyLiveData
