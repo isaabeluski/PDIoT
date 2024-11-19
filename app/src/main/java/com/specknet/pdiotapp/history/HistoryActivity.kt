@@ -79,9 +79,10 @@ class HistoryActivity : AppCompatActivity() {
                             val formattedActivity = activity.split("_").joinToString(" ") {
                                 it.lowercase().replaceFirstChar { char -> char.uppercase() }
                             }
-                            val hours = count / 3600
-                            val minutes = (count % 3600) / 60
-                            val seconds = count % 60
+                            val count_seconds = count / 25
+                            val hours = count_seconds / 3600
+                            val minutes = (count_seconds % 3600) / 60
+                            val seconds = count_seconds % 60
                             displayText.append(
                                 "$formattedActivity: ${hours.toString().padStart(2, '0')}h:" +
                                         "${minutes.toString().padStart(2, '0')}min:" +
@@ -97,9 +98,10 @@ class HistoryActivity : AppCompatActivity() {
                             .mapValues { (_, records) -> records.size }
 
                         for ((socialSign, count) in socialSignSummary) {
-                            val hours = count / 3600
-                            val minutes = (count % 3600) / 60
-                            val seconds = count % 60
+                            val count_seconds = count / 25
+                            val hours = count_seconds / 3600
+                            val minutes = (count_seconds % 3600) / 60
+                            val seconds = count_seconds % 60
                             displayText.append(
                                 "$socialSign: ${hours.toString().padStart(2, '0')}h:" +
                                         "${minutes.toString().padStart(2, '0')}min:" +
