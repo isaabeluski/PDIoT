@@ -54,7 +54,16 @@ class HistoryActivity : AppCompatActivity() {
                 val socialSignData = database.socialSignRecordDao().getAllSocialSigns()
 
                 if (activityData.isNotEmpty() || socialSignData.isNotEmpty()) {
-                    val groupedActivities = activityData.groupBy { record ->
+                    // Step 1: Merge "sitting" and "standing" into "sitting_standing"
+                    val mergedActivityData = activityData.map { record ->
+                        if (record.activityLabel == "sitting" || record.activityLabel == "standing") {
+                            record.copy(activityLabel = "sitting_standing")
+                        } else {
+                            record
+                        }
+                    }
+
+                    val groupedActivities = mergedActivityData.groupBy { record ->
                         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         dateFormat.format(record.timestamp)
                     }
@@ -133,7 +142,14 @@ class HistoryActivity : AppCompatActivity() {
                 val filteredActivities = activityData.filter { record ->
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val recordDate = dateFormat.format(record.timestamp)
-                    recordDate.contains(query, ignoreCase = true) // Check if the query is in the date
+                    recordDate.contains(query, ignoreCase = true)
+                }.map { record ->
+                    // Merge "sitting" and "standing" into "sitting_standing"
+                    if (record.activityLabel == "sitting" || record.activityLabel == "standing") {
+                        record.copy(activityLabel = "sitting_standing")
+                    } else {
+                        record
+                    }
                 }
 
                 // Filter social signs by partial match in the date
