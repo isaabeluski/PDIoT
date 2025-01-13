@@ -14,6 +14,12 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.CalendarView
 import androidx.core.content.ContextCompat
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 
 class HistoryActivity : AppCompatActivity() {
 
@@ -42,6 +48,8 @@ class HistoryActivity : AppCompatActivity() {
 
 
     private fun fetchAndDisplayHistoryForDate(date: String, historyTextView: TextView) {
+        val barChart: BarChart = findViewById(R.id.activity_bar_chart) // Add BarChart reference
+
         lifecycleScope.launch {
             try {
                 val activityData = database.activityRecordDao().getAllActivities()
@@ -70,6 +78,10 @@ class HistoryActivity : AppCompatActivity() {
                     val displayText = StringBuilder()
                     displayText.append("<b><big>Date: $date</big></b><br>")
 
+                    val barEntries = mutableListOf<BarEntry>() // Entries for BarChart
+                    val activityLabels = mutableListOf<String>() // Labels for activities
+                    var index = 0
+
                     if (filteredActivities.isNotEmpty()) {
                         displayText.append("<b>Activities:</b><br>")
                         val activitySummary = filteredActivities.groupBy { it.activityLabel }
@@ -83,11 +95,18 @@ class HistoryActivity : AppCompatActivity() {
                             val hours = count_seconds / 3600
                             val minutes = (count_seconds % 3600) / 60
                             val seconds = count_seconds % 60
+
                             displayText.append(
                                 "$formattedActivity: ${hours.toString().padStart(2, '0')}h:" +
                                         "${minutes.toString().padStart(2, '0')}min:" +
                                         "${seconds.toString().padStart(2, '0')}s<br>"
                             )
+
+                            // Add data to BarChart
+                            val totalMinutes = (hours * 60) + minutes + (seconds / 60.0).toFloat()
+                            barEntries.add(BarEntry(index.toFloat(), totalMinutes))
+                            activityLabels.add(formattedActivity)
+                            index++
                         }
                         displayText.append("<br>")
                     }
@@ -110,14 +129,48 @@ class HistoryActivity : AppCompatActivity() {
                         }
                     }
 
-                    //displayText.append("\u2500".repeat(31) + "<br><br>") // Separator line
                     historyTextView.text = android.text.Html.fromHtml(displayText.toString())
+
+                    // Set up BarChart
+                    if (barEntries.isNotEmpty()) {
+                        val dataSet = BarDataSet(barEntries, "Activity Durations")
+                        dataSet.color = resources.getColor(R.color.teal_700, theme) // Set bar color
+
+                        val barData = BarData(dataSet)
+                        barData.barWidth = 0.9f // Set bar width
+
+                        barChart.data = barData
+                        val xAxis = barChart.xAxis
+                        xAxis.position = XAxis.XAxisPosition.BOTTOM
+                        xAxis.valueFormatter = IndexAxisValueFormatter(activityLabels)
+                        xAxis.granularity = 1f
+                        xAxis.isGranularityEnabled = true
+                        xAxis.labelRotationAngle = 90f // Rotate labels for readability
+
+                        // Configure Y-Axis
+                        barChart.axisLeft.axisMinimum = 0f
+                        barChart.axisRight.isEnabled = false
+
+                        barChart.data.setDrawValues(false)
+
+                        // Remove legend
+                        barChart.legend.isEnabled = false
+
+                        // Additional configurations
+                        barChart.description.isEnabled = false
+                        barChart.setFitBars(true)
+                        barChart.invalidate() // Refresh chart
+                    } else {
+                        barChart.clear()
+                    }
                 } else {
                     historyTextView.text = "No data available for $date."
+                    barChart.clear()
                 }
             } catch (e: Exception) {
                 historyTextView.text = "Error loading history."
                 e.printStackTrace()
+                barChart.clear()
             }
         }
     }

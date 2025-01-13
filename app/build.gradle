@@ -69,6 +69,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.1.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
 
+    // bar graph
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
 
     implementation 'io.reactivex:rxandroid:1.2.1'
