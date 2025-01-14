@@ -1,25 +1,26 @@
 package com.specknet.pdiotapp.history
 
-import android.graphics.drawable.Drawable
+
 import com.specknet.pdiotapp.R
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.EditText
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import android.text.Editable
-import android.text.TextWatcher
 import android.widget.CalendarView
-import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import android.graphics.drawable.Drawable
+import android.widget.EditText
+import android.text.Editable
+import android.text.TextWatcher
+import androidx.core.content.ContextCompat
 
 class HistoryActivity : AppCompatActivity() {
 
@@ -37,6 +38,7 @@ class HistoryActivity : AppCompatActivity() {
 
         // Set up CalendarView to fetch data for the selected date
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            // Format the selected date into "yyyy-MM-dd"
             val selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
             fetchAndDisplayHistoryForDate(selectedDate, historyTextView)
         }
@@ -52,6 +54,7 @@ class HistoryActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                // Fetch all activity and social sign data from the database
                 val activityData = database.activityRecordDao().getAllActivities()
                 val socialSignData = database.socialSignRecordDao().getAllSocialSigns()
 
@@ -68,12 +71,13 @@ class HistoryActivity : AppCompatActivity() {
                     }
                 }
 
+                // Filter social sign data for the selected date
                 val filteredSocialSigns = socialSignData.filter {
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     dateFormat.format(it.timestamp) == date
                 }
 
-                // Build display text
+                // Check if there is any data for the selected date
                 if (filteredActivities.isNotEmpty() || filteredSocialSigns.isNotEmpty()) {
                     val displayText = StringBuilder()
                     displayText.append("<b><big>Date: $date</big></b><br>")
@@ -134,10 +138,10 @@ class HistoryActivity : AppCompatActivity() {
                     // Set up BarChart
                     if (barEntries.isNotEmpty()) {
                         val dataSet = BarDataSet(barEntries, "Activity Durations")
-                        dataSet.color = resources.getColor(R.color.teal_700, theme) // Set bar color
+                        dataSet.color = resources.getColor(R.color.teal_700, theme)
 
                         val barData = BarData(dataSet)
-                        barData.barWidth = 0.9f // Set bar width
+                        barData.barWidth = 0.9f
 
                         barChart.data = barData
                         val xAxis = barChart.xAxis
@@ -159,7 +163,7 @@ class HistoryActivity : AppCompatActivity() {
                         // Additional configurations
                         barChart.description.isEnabled = false
                         barChart.setFitBars(true)
-                        barChart.invalidate() // Refresh chart
+                        barChart.invalidate()
                     } else {
                         barChart.clear()
                     }

@@ -47,20 +47,19 @@ class LiveDataActivity : AppCompatActivity() {
     lateinit var dataSet_thingy_accel_y: LineDataSet
     lateinit var dataSet_thingy_accel_z: LineDataSet
 
+    // UI components
     private lateinit var activityDisplayTextView: TextView
     private lateinit var respiratoryConditionDisplayTextView: TextView
     private lateinit var activityIcon: ImageView
     private lateinit var respiratoryConditionIcon : ImageView
 
-    // Room database
+    // Room database for storing data
     private lateinit var database: AppDatabase
 
 
     var time = 0f
     lateinit var allRespeckData: LineData
-
     lateinit var allThingyData: LineData
-
     lateinit var respeckChart: LineChart
     lateinit var thingyChart: LineChart
 
@@ -70,6 +69,7 @@ class LiveDataActivity : AppCompatActivity() {
     lateinit var looperRespeck: Looper
     lateinit var looperThingy: Looper
 
+    // Variables to track activity and respiratory conditions
     private var lastActivity = ""
     private var lastRespiratoryCondition = ""
     private val updateInterval = 1000L
@@ -82,6 +82,8 @@ class LiveDataActivity : AppCompatActivity() {
     val respeckBufferActivity = ArrayList<FloatArray>()  // Buffer for Respeck data
     val respeckBufferRespiratory = ArrayList<FloatArray>()  // Buffer for Respeck data
     val thingyBuffer = ArrayList<FloatArray>()   // Buffer for Thingy data
+
+    // Labels for detected activities and conditions
     lateinit var detectedSittingStandingLabel: String
     lateinit var detectedActivityLabel: String
     private var lastThingyUpdateTime: Long = 0
@@ -91,33 +93,20 @@ class LiveDataActivity : AppCompatActivity() {
     val WINDOW_SIZE_RESPIRATORY = 100  // Define the window size as 100
     val WINDOW_SIZE_THINGY = 50  // Define the window size as 50
 
+    // Maps for activity and respiratory conditions
     val activities = mapOf(
-        0 to "Normal Walking",
-        1 to "Descending Stairs",
-        2 to "Lying Down on Back",
-        3 to "Lying Down on Left",
-        4 to "Lying Down on Right",
-        5 to "Lying Down on Stomach",
-        6 to "Miscellaneous",
-        7 to "Normal Walking",
-        8 to "Normal Running",
-        9 to "Shuffle Walking",
-        10 to "Sitting / Standing"
+        0 to "Ascending Stairs",
+        1 to "Shuffle Walking",
+        2 to "Sitting / Standing",
+        3 to "Miscellaneous",
+        4 to "Normal Walking",
+        5 to "Normal Running",
+        6 to "Descending Stairs",
+        7 to "Lying Down on Right",
+        8 to "Lying Down on Left",
+        9 to "Lying Down on Stomach",
+        10 to "Lying Down on Back"
     )
-
-//    val activities = mapOf(
-//        0 to "Ascending Stairs",
-//        1 to "Shuffle Walking",
-//        2 to "Sitting / Standing",
-//        3 to "Miscellaneous",
-//        4 to "Normal Walking",
-//        5 to "Normal Running",
-//        6 to "Descending Stairs",
-//        7 to "Lying Down on Right",
-//        8 to "Lying Down on Left",
-//        9 to "Lying Down on Stomach",
-//        10 to "Lying Down on Back"
-//    )
 
     val respiratoryConditions = mapOf(
         0 to "Normal",
@@ -131,6 +120,7 @@ class LiveDataActivity : AppCompatActivity() {
         1 to "Standing"
     )
 
+    // TensorFlow Lite interpreters for models
     lateinit var interpreterActivity: Interpreter
     lateinit var interpreterRespiratory: Interpreter
     lateinit var interpreterSittingStanding: Interpreter
@@ -178,10 +168,11 @@ class LiveDataActivity : AppCompatActivity() {
 
         setupCharts()
 
+        // Load models for activity, respiratory condition, and sitting/standing detection
         val modelActivity = loadModelFile("respeck_10_120epochs_100windowsize_2layers.tflite")
-        interpreterActivity = Interpreter(modelActivity) // Initialize interpreter here
+        interpreterActivity = Interpreter(modelActivity)
         val modelRespiratory = loadModelFile("model_respiratory.tflite")
-        interpreterRespiratory = Interpreter(modelRespiratory) // Initialize interpreter here
+        interpreterRespiratory = Interpreter(modelRespiratory)
         val modelSittingStanding = loadModelFile("thingy_3_sittingStanding_100epochs.tflite")
         interpreterSittingStanding = Interpreter(modelSittingStanding) // Initialize interpreter here
 
@@ -422,17 +413,19 @@ class LiveDataActivity : AppCompatActivity() {
 
     }
 
-
+    // Function to update the detected activity and update the UI accordingly
     private fun updateDetectedActivity(activityLabel: String) {
         val currentTime = System.currentTimeMillis()
 
-        // room database
+        // Create an activity record
         val record = ActivityRecord(activityLabel = activityLabel, timestamp = currentTime)
 
+        // Insert the activity record into the Room database
         lifecycleScope.launch {
             database.activityRecordDao().insertActivity(record)
         }
 
+        // Check if the activity has changed and enough time has passed since the last update
         if (activityLabel != lastActivity && currentTime - lastActivityUpdateTime >= updateInterval) {
             runOnUiThread {
                 activityDisplayTextView.text = "Current Activity: $activityLabel"
@@ -464,16 +457,22 @@ class LiveDataActivity : AppCompatActivity() {
         }
     }
 
+    // Function to update the detected respiratory condition and update the UI accordingly
     private fun updateDetectedRespiratoryCondition(respiratoryConditionLabel: String) {
         val currentTime = System.currentTimeMillis()
+
+        // Create a social sign record
         val socialSignRecord = SocialSignRecord(
             socialSignLabel = respiratoryConditionLabel,
             timestamp = currentTime
         )
 
+        // Insert the social sign record into the Room database
         lifecycleScope.launch {
             database.socialSignRecordDao().insertSocialSign(socialSignRecord)
         }
+
+        // Check if the respiratory condition has changed and enough time has passed since the last update
         if (respiratoryConditionLabel != lastRespiratoryCondition && currentTime - lastRespiratoryConditionUpdateTime >= updateInterval) {
             runOnUiThread {
                 respiratoryConditionDisplayTextView.text = "Current Respiratory Condition: $respiratoryConditionLabel"
@@ -587,8 +586,7 @@ class LiveDataActivity : AppCompatActivity() {
     }
 
     fun updateGraph(graph: String, x: Float, y: Float, z: Float) {
-        // take the first element from the queue
-        // and update the graph with it
+        // Update Respeck chart
         if (graph == "respeck") {
             dataSet_res_accel_x.addEntry(Entry(time, x))
             dataSet_res_accel_y.addEntry(Entry(time, y))
@@ -601,6 +599,7 @@ class LiveDataActivity : AppCompatActivity() {
                 respeckChart.setVisibleXRangeMaximum(150f)
                 respeckChart.moveViewToX(respeckChart.lowestVisibleX + 40)
             }
+        // Update Thingy chart
         } else if (graph == "thingy") {
             dataSet_thingy_accel_x.addEntry(Entry(time, x))
             dataSet_thingy_accel_y.addEntry(Entry(time, y))
@@ -614,8 +613,6 @@ class LiveDataActivity : AppCompatActivity() {
                 thingyChart.moveViewToX(thingyChart.lowestVisibleX + 40)
             }
         }
-
-
     }
 
 

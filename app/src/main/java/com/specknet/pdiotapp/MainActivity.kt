@@ -36,11 +36,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var recordButton: LinearLayout
     lateinit var historyButton: LinearLayout
 
-    // permissions
     lateinit var permissionAlertDialog: AlertDialog.Builder
-
     val permissionsForRequest = arrayListOf<String>()
-
     var blePermissionGranted = false
     var locationPermissionGranted = false
     var cameraPermissionGranted = false
@@ -56,7 +53,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // check whether the onboarding screen should be shown
         val sharedPreferences = getSharedPreferences(Constants.PREFERENCES_FILE, Context.MODE_PRIVATE)
         if (sharedPreferences.contains(Constants.PREF_USER_FIRST_TIME)) {
             isUserFirstTime = false
@@ -94,6 +90,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    // Helper function to set button text and icon
     private fun setButtonDetails(button: LinearLayout, text: String, iconResId: Int) {
         val buttonText = button.findViewById<TextView>(R.id.button_text)
         val buttonIcon = button.findViewById<ImageView>(R.id.button_icon)

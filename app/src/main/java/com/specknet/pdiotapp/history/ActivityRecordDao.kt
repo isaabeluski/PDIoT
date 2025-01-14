@@ -10,7 +10,7 @@ interface ActivityRecordDao {
     @Insert
     suspend fun insertActivity(record: ActivityRecord)
 
-    // Retrieve all activity records sorted by timestamp (latest first)
+    // Retrieve all activity records sorted by timestamp
     @Query("SELECT * FROM activity_records ORDER BY timestamp DESC")
     suspend fun getAllActivities(): List<ActivityRecord>
 }
